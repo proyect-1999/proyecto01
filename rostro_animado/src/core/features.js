@@ -1,4 +1,3 @@
-//+++ rostro_animado/src/core/features.js 
 /* ============================================================
  * features.js —— Sistema de rasgos faciales y accesorios enlazados
  *

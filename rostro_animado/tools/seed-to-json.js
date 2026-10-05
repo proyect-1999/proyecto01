@@ -1,13 +1,17 @@
---- rostro_animado/tools/seed-to-json.js (原始)
-
-
-+++ rostro_animado/tools/seed-to-json.js (修改后)
 #!/usr/bin/env node
 /* ============================================================
- * seed-to-json.js — Migración única del catálogo de emociones
+ * seed-to-json.js — Generador + validador del catálogo de emociones
  *
  *   node tools/seed-to-json.js            → genera data/emotions.json
- *   node tools/seed-to-json.js --check    → valida sin escribir (exit 1 si hay errores)
+ *                                            y regenera el enum `mouth` de
+ *                                            data/emotions.schema.json
+ *   node tools/seed-to-json.js --check    → valida sin escribir (exit 1 si hay errores):
+ *                                            seed válido + data/emotions.json y
+ *                                            emotions.schema.json al día
+ *
+ * Fuentes vivas (A5): las listas de huecos (mouthSlots) y de presets se LEEN
+ * de src/core/geometry.js y src/core/engine.js respectivamente — ya no existen
+ * copias manuales que se desfasen. El schema también se deriva de geometry.js.
  *
  * Lee src/data/emotions.js (datos puros: window.EMOTION_SEED / EMOTION_GROUPS),
  * lo evalúa en un sandbox mínimo y emite el catálogo externo que consume
@@ -24,24 +28,53 @@ var vm = require('vm');
 
 var ROOT = path.join(__dirname, '..');
 var SEED_FILE = path.join(ROOT, 'src', 'data', 'emotions.js');
+var GEOMETRY_FILE = path.join(ROOT, 'src', 'core', 'geometry.js');
+var ENGINE_FILE = path.join(ROOT, 'src', 'core', 'engine.js');
 var OUT_FILE = path.join(ROOT, 'data', 'emotions.json');
+var SCHEMA_FILE = path.join(ROOT, 'data', 'emotions.schema.json');
 var CHECK_ONLY = process.argv.indexOf('--check') >= 0;
 
-/* Presets exportados: espejo de la tabla PRESETS de src/core/engine.js.
- * registerPreset los fusiona al importar, por lo que mantener esta copia
- * actualizada es opcional (el motor ya los conoce); se incluyen para que
- * el JSON sea autocontenido y editable sin tocar código. */
-var PRESETS = {
-  steady:   { poolMs: [9000, 16000], blinkMs: [6000, 14000], breathe: 0.010 },
-  calm:     { poolMs: [7000, 12000], blinkMs: [5000, 11000], breathe: 0.010 },
-  slow:     { poolMs: [12000, 20000], blinkMs: [8000, 16000], breathe: 0.006, blinkS: 'heavy' },
-  lively:   { poolMs: [2500, 4500], blinkMs: [2500, 5000], breathe: 0.014, antics: true },
-  jumpy:    { poolMs: [1400, 2600], blinkMs: [1600, 3500], breathe: 0.008, poolSpeed: 9 },
-  nervous:  { poolMs: [900, 1800], blinkMs: [1200, 2600], breathe: 0.006, blinkS: 'nervous' },
-  focused:  { poolMs: [1800, 3200], blinkMs: [2800, 5500], breathe: 0.004 },
-  sleepy:   { poolMs: [4000, 8000], blinkMs: null, breathe: 0.005, blinkS: 'heavy' },
-  thinking: { poolMs: [2000, 3600], blinkMs: [3500, 7000], breathe: 0.010, blinkS: 'thinking' }
-};
+/* ---------------- Leer los huecos de boca desde la fuente viva ----------------
+ * geometry.js es un IIFE que cuelga de `window`; se evalúa en un sandbox mínimo.
+ * Si cambiara a CommonJS, añadir `module.exports` allí y usar require() aquí. */
+
+var geoSb = { window: {} };
+vm.createContext(geoSb);
+vm.runInContext(fs.readFileSync(GEOMETRY_FILE, 'utf8'), geoSb, { filename: 'geometry.js' });
+var GEO = geoSb.window.MoodMates && geoSb.window.MoodMates.geo;
+if (!GEO || !Array.isArray(GEO.mouthSlots)) {
+  console.error('✗ src/core/geometry.js no expone MoodMates.geo.mouthSlots (revisa el sandbox de este script)');
+  process.exit(1);
+}
+var MOUTHS = GEO.mouthSlots;
+
+/* ---------------- Leer los presets desde la fuente viva ----------------
+ * engine.js no puede evaluarse en Node (usa document/performance/rAF), así que
+ * se extrae la tabla `var PRESETS = {…};` y se evalúa como objeto literal.
+ * El cierre es la primera línea `};` tras la apertura (columna 0 o 2, único
+ * nivel de cierre posible dentro de la tabla: sus valores no anidan objetos a
+ * esa indentación). */
+
+var engineSrc = fs.readFileSync(ENGINE_FILE, 'utf8');
+var pStart = engineSrc.indexOf('var PRESETS = {');
+if (pStart < 0) {
+  console.error('✗ No se encontró la tabla `var PRESETS = {…};` en src/core/engine.js (¿cambió el formato?)');
+  process.exit(1);
+}
+var tail = engineSrc.slice(pStart);
+var mEnd = tail.match(/\n(?:  )?\};/);
+if (!mEnd) {
+  console.error('✗ No se encontró el cierre de la tabla PRESETS en src/core/engine.js');
+  process.exit(1);
+}
+var preSrc = tail.slice(tail.indexOf('{'), mEnd.index + mEnd[0].length - 1); // hasta el ';'
+var PRESETS;
+try {
+  PRESETS = vm.runInNewContext('(' + preSrc + ')', {});
+} catch (e) {
+  console.error('✗ La tabla PRESETS de engine.js no es un literal evaluable: ' + e.message);
+  process.exit(1);
+}
 
 /* ---------------- Cargar el seed (datos puros sobre window) ---------------- */
 
@@ -61,7 +94,7 @@ var errors = [];
 var seen = {};
 var ID_RE = /^(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|[5-9][0-9])$/;
 var GROUPS = ['life', 'emotion', 'agent', 'custom'];
-var MOUTHS = ['smile', 'grin', 'o', 'flat', 'frown', 'wavy', 'pout', 'open', 'dot'];
+/* MOUTHS viene de geometry.js (línea viva, A5) — no duplicar aquí. */
 var ANIM_TYPES = ['sine', 'pulse', 'jitter', 'scan', 'glance', 'blink'];
 
 seed.forEach(function (raw, i) {
@@ -91,7 +124,52 @@ if (errors.length) {
   process.exit(1);
 }
 
-/* ---------------- Emitir ---------------- */
+/* ---------------- Enum `mouth` del schema, derivado de geometry.js (A5) ----------------
+ * Se inyecta entre marcadores para no reescribir el resto del schema a ciegas. */
+
+var MOUTH_ENUM_LINE = '        "mouth": { "enum": [' + MOUTHS.map(function (s) { return '"' + s + '"'; }).join(', ') + '] },';
+var MARK_BEGIN = '  /* AUTO:MOUTH-ENUM-BEGIN — generado por tools/seed-to-json.js a partir de src/core/geometry.js: NO EDITAR A MANO */';
+var MARK_END   = '        /* AUTO:MOUTH-ENUM-END */';
+
+function mouthEnumBlock() { return MARK_BEGIN + '\n' + MOUTH_ENUM_LINE + '\n' + MARK_END; }
+
+function syncSchema(checkOnly) {
+  if (!fs.existsSync(SCHEMA_FILE)) {
+    console.error('✗ Falta data/emotions.schema.json');
+    process.exit(1);
+  }
+  var src = fs.readFileSync(SCHEMA_FILE, 'utf8');
+  var eol = src.indexOf('\r\n') >= 0 ? '\r\n' : '\n';
+  function toEol(s) { return eol === '\n' ? s : s.replace(/\n/g, eol); }
+  var nb = toEol(MARK_BEGIN), ne = toEol(MARK_END);
+  var i = src.indexOf(nb), j = src.indexOf(ne);
+  var outSrc;
+  if (i >= 0 && j > i) {
+    outSrc = src.slice(0, i) + mouthEnumBlock().replace(/\n/g, eol === '\n' ? '\n' : '\r\n') + src.slice(j + ne.length);
+  } else {
+    /* sin marcadores: primera pasada — envolver la línea actual del enum de mouth */
+    var mLine = src.match(/([ \t]*"mouth": \{ "enum": \[[^\]]*\] \},)/);
+    if (!mLine) {
+      console.error('✗ No se encontró la propiedad "mouth" en emotions.schema.json para insertar los marcadores AUTO');
+      process.exit(1);
+    }
+    var indent = mLine[1].slice(0, mLine[1].length - mLine[1].trimStart().length);
+    var block = indent + MARK_BEGIN.replace(/^ */, '') + eol + MOUTH_ENUM_LINE + eol + indent + MARK_END.replace(/^ */, '') + eol;
+    outSrc = src.replace(mLine[1], block.replace(/\n$/, ''));
+  }
+  if (checkOnly) {
+    var curM = src.match(/"mouth": \{ "enum": \[([^\]]*)\] \}/);
+    var want = MOUTHS.map(function (s) { return '"' + s + '"'; }).join(', ');
+    if (!curM || curM[1].trim() !== want) {
+      console.error('✗ data/emotions.schema.json está desfasado respecto a mouthSlots de geometry.js.\n  esperado: ' + want + '\n  actual:  ' + (curM ? curM[1].trim() : '(sin enum de mouth)') + '\n  Ejecuta: node tools/seed-to-json.js');
+      process.exit(1);
+    }
+    return;
+  }
+  fs.writeFileSync(SCHEMA_FILE, outSrc);
+}
+
+/* ---------------- Emitir / comprobar ---------------- */
 
 var out = {
   $schema: './emotions.schema.json',
@@ -104,10 +182,28 @@ var out = {
 var json = JSON.stringify(out, null, 2) + '\n';
 
 if (CHECK_ONLY) {
-  console.log('✓ seed válido: ' + seed.length + ' emociones, ids únicos, grupos y slots correctos (--check, no se escribió nada)');
+  /* A4/A5: el catálogo publicado debe estar al día respecto al seed y al schema. */
+  if (fs.existsSync(OUT_FILE)) {
+    var current = JSON.parse(fs.readFileSync(OUT_FILE, 'utf8'));
+    if (JSON.stringify(current.emotions) !== JSON.stringify(seed)) {
+      console.error('✗ data/emotions.json está desfasado respecto a src/data/emotions.js. Ejecuta: node tools/seed-to-json.js');
+      process.exit(1);
+    }
+    if (JSON.stringify(current.presets || {}) !== JSON.stringify(PRESETS)) {
+      console.error('✗ Los presets de data/emotions.json no coinciden con PRESETS de engine.js. Ejecuta: node tools/seed-to-json.js');
+      process.exit(1);
+    }
+  } else {
+    console.error('✗ Falta data/emotions.json. Ejecuta: node tools/seed-to-json.js');
+    process.exit(1);
+  }
+  syncSchema(true);
+  console.log('✓ seed válido: ' + seed.length + ' emociones, ids únicos, grupos y slots correctos · ' +
+              'data/emotions.json y emotions.schema.json al día (' + MOUTHS.length + ' huecos de boca) (--check, no se escribió nada)');
   process.exit(0);
 }
 
 fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
 fs.writeFileSync(OUT_FILE, json);
-console.log('✓ data/emotions.json generado: ' + seed.length + ' emociones (' + (json.length / 1024).toFixed(1) + ' KB)');
+syncSchema(false);
+console.log('✓ data/emotions.json generado: ' + seed.length + ' emociones (' + (json.length / 1024).toFixed(1) + ' KB) · enum mouth del schema sincronizado (' + MOUTHS.length + ' huecos)');

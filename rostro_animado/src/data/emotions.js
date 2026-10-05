@@ -1,4 +1,3 @@
-//+++ rostro_animado/src/data/emotions.js
 /* ============================================================
  * emotions.js — Núcleo de datos de emociones (solo datos, sin DOM ni lógica)
  *
