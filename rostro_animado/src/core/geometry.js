@@ -1,4 +1,4 @@
-//+++ rostro_animado/src/core/geometry.js
+
 /* ============================================================
  * geometry.js — Biblioteca de generación de contornos paramétrica (base geométrica original de Mood Mates)
  *
@@ -249,7 +249,12 @@
       sob:    function (b) { return mouthLens({ w: b.w * 0.6, h: b.w * 0.42, bend: 0.75, taper: 0.5, cornerL: 1.6, cornerR: -1.2 }); },
       yawn:   function (b) { return mouthLens({ w: b.w * 0.62, h: b.w * 0.9, bend: -0.05, taper: 0.35 }); },
       kiss:   function (b) { return mouthLens({ w: b.w * 0.34, h: b.w * 0.3, bend: 0.15, taper: 0.3 }); },
-      tongue: function (b) { return mouthLens({ w: b.w * 0.8, h: b.w * 0.55, bend: -0.3, taper: 0.45 }); }
+      tongue: function (b) { return mouthLens({ w: b.w * 0.8, h: b.w * 0.55, bend: -0.3, taper: 0.45 }); },
+      /* ---- v2.1: huecos para el catálogo emoji U+1F600–U+1F637 (mapeo en src/data/emoji-map.js) ---- */
+      grimace: function (b) { return mouthLens({ w: b.w * 1.05, h: 4.2, bend: 0.3, taper: 0.55, cornerL: 1.4, cornerR: 1.4 }); },
+      openO:   function (b) { return mouthLens({ w: b.w * 0.9, h: b.w * 0.85, bend: -0.15, taper: 0.4 }); },
+      smileOpen: function (b) { return mouthLens({ w: b.w * 1.05, h: b.w * 0.6, bend: -0.85, taper: 0.5 }); },
+      frownOpen: function (b) { return mouthLens({ w: b.w * 0.6, h: b.w * 0.45, bend: 0.6, taper: 0.5 }); }
    };
 
    function buildMouth(slotName, base) {

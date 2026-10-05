@@ -1,4 +1,3 @@
-//+++ rostro_animado/src/core/engine.js
 /* ============================================================
  * engine.js — Capa de motor (depende de geometry / render / features / fx; consume datos puros de emotions.js)
  *
@@ -65,8 +64,11 @@
   var BOUNCE_TOTAL = BOUNCE_SEGS.reduce(function (s, q) { return s + q.d; }, 0);
 
   function hexToRgb(hex) {
-    var h = hex.replace('#', '');
+    /* N4: tolerante a entradas inválidas — un color no-hex propagaba NaN por lerpColor y
+     * terminaba en atributos SVG "#NaNNaNNaN". Cualquier cosa no reconocida → negro. */
+    var h = String(hex == null ? '' : hex).replace('#', '');
     if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return [0, 0, 0];
     var n = parseInt(h, 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
@@ -244,9 +246,23 @@
         merged.palette = pal;
       }
       if (v.eyeStyle) {
-        /* ojo con pupila: el degradado de iris se construye al crear la bola a partir de
-         * ch.eyeStyle.pupil, basta con reconstruir el objeto de estilo fusionado */
-        merged.eyeStyle = deepMergeObj(base.eyeStyle, v.eyeStyle);
+        /* A6: la fusión anterior solo actualizaba eyeStyle; los contornos del grupo ocular
+         * (eyeFamily/defaultEyeRing) seguían siendo los del personaje base, así que dx/cy/w/h/
+         * taper/tilt/bend de una variante no tenían efecto visual. Si cambia algún parámetro
+         * geométrico se reconstruye la familia completa; si solo cambian highlight/pupil basta
+         * con fusionar el estilo (el degradado de iris se construye al crear la bola en render). */
+        var es = deepMergeObj(base.eyeStyle, v.eyeStyle);
+        merged.eyeStyle = es;
+        var GEOM_KEYS = ['dx', 'cy', 'w', 'h', 'taper', 'tilt', 'bend'];
+        var geomChanged = GEOM_KEYS.some(function (gk) { return v.eyeStyle[gk] != null && v.eyeStyle[gk] !== base.eyeStyle[gk]; });
+        if (geomChanged) {
+          var famV = GEO.buildEyeFamily(es);
+          if (raw.eyeShapes) {
+            for (var eskV in raw.eyeShapes) famV[eskV] = GEO.buildCustomEyePair(raw.eyeShapes[eskV], es);
+          }
+          merged.eyeFamily = famV;
+          merged.defaultEyeRing = famV.calm;
+        }
       }
       if (v.features) {
         merged.features = deepMergeObj(base.features, v.features);
@@ -336,15 +352,36 @@
   /** Fusiona un fragmento de configuración (body / eyes.both|left|right / face) sobre el pose (modifica in situ) */
   function applySpec(pose, spec) {
     if (!spec) return pose;
-    if (spec.body) Object.assign(pose.body, spec.body);
-    if (spec.face) Object.assign(pose.face, spec.face);
+    /* N2: saneo numérico — un host (o un payload de IA vía handleAIMessage/importConfig)
+     * que envíe strings, NaN o null no debe corromper la pose ni propagar NaN a los
+     * atributos SVG. Las claves de color se validan en resolvePoseColors; el resto:
+     * números finitos pasan, valores no numéricos finitos (booleanos/strings limpios)
+     * se conservan, basura (NaN/Infinity/null/objetos) se descarta con aviso. */
+    __mergeSane(pose.body, spec.body);
+    __mergeSane(pose.face, spec.face);
     var e = spec.eyes;
     if (e) {
-      if (e.both) { Object.assign(pose.left, e.both); Object.assign(pose.right, e.both); }
-      if (e.left) Object.assign(pose.left, e.left);
-      if (e.right) Object.assign(pose.right, e.right);
+      if (e.both) { __mergeSane(pose.left, e.both); __mergeSane(pose.right, e.both); }
+      if (e.left) __mergeSane(pose.left, e.left);
+      if (e.right) __mergeSane(pose.right, e.right);
     }
     return pose;
+  }
+
+  function __mergeSane(target, patch) {
+    if (!patch || typeof patch !== 'object') return;
+    for (var k in patch) {
+      var v = patch[k];
+      if (v == null) continue;
+      if (typeof v === 'number') {
+        if (!isFinite(v)) { console.warn('[MoodMates] applySpec: valor no finito descartado en ' + k); continue; }
+        target[k] = v;
+      } else if (typeof v === 'string' || typeof v === 'boolean') {
+        target[k] = v;                       /* tokens '@base', colores, flags */
+      } else {
+        console.warn('[MoodMates] applySpec: tipo ignorado en ' + k);
+      }
+    }
   }
 
   var POSE_PARTS = ['body', 'left', 'right', 'face'];
@@ -606,7 +643,7 @@
 
   function applyPresets(raw) {
     var out = Object.assign({}, raw);
-    var anims = (raw.anims || []).slice();
+    var pendingBreathe = null;
     raw.presets.forEach(function (pname) {
       var p = PRESETS[pname];
       if (!p) { console.warn('[MoodMates] preset desconocido: ' + pname); return; }
@@ -615,11 +652,19 @@
       if (out.poolSpeed == null && p.poolSpeed) out.poolSpeed = p.poolSpeed;
       if (out.antics == null && p.antics) out.antics = true;
       if (out.blinkProfile == null && p.blinkS) out.blinkProfile = p.blinkS;
-      if (p.breathe && !(anims.length && anims[0].isBreathe)) {
-        anims.unshift({ target: '_breathe', prop: 'scale', type: 'sine', amp: p.breathe, period: 3600, isBreathe: true });
-      }
+      /* A3: la versión anterior insertaba una anim con target '_breathe' (inexistente en
+       * applyAnim) y la filtraba inmediatamente — el breathe de los presets era código muerto.
+       * La respiración real se lee de pose.body.breathe en _compose, así que el valor del
+       * preset se aplica ahí. Regla de prioridad: body.breathe explícito > preset > default. */
+      if (p.breathe != null) pendingBreathe = p.breathe;
     });
-    out.anims = anims.filter(function (a) { return !a.isBreathe; });
+    if (pendingBreathe != null) {
+      var body = Object.assign({}, raw.body);
+      if (body.breathe == null) {
+        body.breathe = pendingBreathe;
+        out.body = body;
+      }
+    }
     delete out.presets;
     return out;
   }
@@ -781,6 +826,7 @@
      /* ---- sistema de parpadeo ---- */
     this._open = spring(1);
     this._blinkQ = [];
+    this._asymUntil = 0;   /* A1: ventana temporal del parpadeo asimétrico (antes _asym era flag permanente) */
     this._blinkNext = Infinity;
      /* ---- movimientos ocasionales de espera ---- */
     this._anticNext = 0;
@@ -1104,8 +1150,10 @@
       this._blinkQ.push({ at: t - 40, v: 1.06 });
       var pr = (this._def && this._def.blinkProfile) ? BLINK_PROFILES[this._def.blinkProfile] : null;
       if (!pr) {
-        /* v2.0 parpadeo asimétrico: el ojo derecho entra 20-40ms tarde (se aplica en render vía eye.k) */
-        this._asym = rand(20, 40);
+        /* v2.0 parpadeo asimétrico: el ojo derecho llega tarde al cierre (ventana de 320ms;
+         * A1: antes `this._asym = rand(20,40)` quedaba truthy para siempre y desfasaba la
+         * apertura del ojo derecho en cualquier emoción con openness < 0.97) */
+        this._asymUntil = t + 320;
         this._blinkQ.push(
           { at: t, v: 0.05 }, { at: t + 70, v: 0.05 },
           { at: t + 150, v: 1.08 }, { at: t + 300, v: 1 }
@@ -1118,7 +1166,7 @@
       var d = pr.depth == null ? 1 : pr.depth;
       var vC = 0.05 + (1 - d) * 0.9;               /* profundidad de cierre (entrecierre si d<1) */
       var close = pr.close || 120, pause = pr.pause || 70, rise = pr.rise || 150;
-      this._asym = rand(20, 40);
+      this._asymUntil = t + Math.max(320, close + pause + rise);   /* A1: ventana acotada, no flag permanente */
       this._blinkQ.push(
         { at: t, v: vC }, { at: t + close, v: vC },
         { at: t + close + pause, v: 1.06 }, { at: t + close + pause + rise, v: 1 }
@@ -1392,16 +1440,22 @@
       pose.right.open = clamp(pose.right.open, 0, 1.3) * openS;
 
       /* ---- v2.0: micro-vida ocular ---- */
-      /* parpadeo asimétrico: el ojo derecho entra 20-40ms tarde (desfasa la curva de apertura) */
-      if (this._asym && openS < 0.97) {
-        pose.right.open = clamp(pose.right.open + (1 - openS) * 0.55, 0.02, 1.5);
+      /* parpadeo asimétrico: durante la ventana del parpadeo en curso el ojo derecho llega
+       * tarde al cierre — se compensa manteniendo más apertura mientras openS < 0.97.
+       * A1: acotado por _asymUntil (antes era un flag permanente que dejaba medio abierto
+       * el ojo derecho en emociones con openness baja: 00/06/15/38/41). */
+      if (this._asymUntil && now < this._asymUntil && openS < 0.97) {
+        pose.right.open = clamp(pose.right.open + (1 - openS) * 0.35, 0.02, 1.5);
       }
       /* convergencia: miradas cercanales mueven cada ojo ±1.5px hacia el centro */
       var conv = clamp(1.5 - Math.abs(this._gaze.x) / 16, 0, 1) * 1.5;
       pose.left.lookX += conv;
       pose.right.lookX -= conv;
-      /* acoplamiento párpado-mirada: mirar abajo baja el párpado ~30% del lookY (señal de vida barata) */
-      var lidDip = clamp(-this._gaze.y * 0.012, 0, 0.25);
+      /* acoplamiento párpado-mirada: mirar abajo baja el párpado ~30% del lookY (señal de vida barata).
+       * A2: render.js desplaza el iris con +pose.lookY (lookY > 0 = mirar ABAJO), así que el
+       * despiste debe ser proporcional positivo; el signo menos anterior invertía el acople
+       * (mirar arriba cerraba el párpado, mirar abajo no hacía nada). */
+      var lidDip = clamp(this._gaze.y * 0.012, 0, 0.25);
       if (lidDip > 0.01) {
         pose.left.open = clamp(pose.left.open - lidDip, 0.02, 1.5);
         pose.right.open = clamp(pose.right.open - lidDip, 0.02, 1.5);

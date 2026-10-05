@@ -1,4 +1,4 @@
-//+++ rostro_animado/src/core/render.js
+
 /* ============================================================
  * render.js — Capa de renderizado (solo renderizado, sin lógica de negocio)
  *

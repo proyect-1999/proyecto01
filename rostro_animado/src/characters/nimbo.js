@@ -1,4 +1,4 @@
-//+++ rostro_animado/src/characters/nimbo.js
+
 /* ============================================================
  * Nimbo Nubes (general) — Nube esponjosa
  *   Concepto definitivo: assets/concepts/concept-nimbo.png alternativa A (azul niebla / lavanda)

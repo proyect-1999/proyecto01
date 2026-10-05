@@ -1,4 +1,4 @@
-//+++ rostro_animado/site/app.js
+
 /* ============================================================
  * app.js —— Capa de interacción (shell del sitio de la galería, solo depende del SDK MoodMates + MM_I18N)
  *

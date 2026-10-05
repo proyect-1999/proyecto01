@@ -1,4 +1,4 @@
-// rostro_animado/src/characters/twinkle.js
+
 /* ============================================================
  * Twinkle Brillo (general) — Estrella redondeada
  *   Concepto definitivo: assets/concepts/concept-twinkle.png alternativa A (oro miel + gafas de montura dorada)

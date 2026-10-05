@@ -1,7 +1,6 @@
-
 {
   "$schema": "./emotions.schema.json",
-  "version": "2026-10-03",
+  "version": "2026-10-05",
   "generatedBy": "tools/seed-to-json.js",
   "presets": {
     "steady": {
@@ -675,7 +674,9 @@
           "y": 8,
           "scaleX": 0.88,
           "scaleY": 0.88,
-          "lookY": 4
+          "lookY": 4,
+          "pupil": 1.15,
+          "wet": 0.35
         }
       },
       "face": {
@@ -726,7 +727,8 @@
           "scaleX": 1.14,
           "scaleY": 1.14,
           "y": -2,
-          "lookY": -2
+          "lookY": -2,
+          "pupil": 1.35
         }
       },
       "face": {
@@ -817,7 +819,8 @@
         "both": {
           "y": 4,
           "lookX": 8,
-          "lookY": 3
+          "lookY": 3,
+          "wet": 0.5
         }
       },
       "face": {
@@ -1178,6 +1181,11 @@
         "breathe": 0.004,
         "color": "@angry"
       },
+      "eyes": {
+        "both": {
+          "pupil": 0.78
+        }
+      },
       "face": {
         "browVis": 1,
         "browTilt": -14,
@@ -1402,7 +1410,8 @@
       },
       "eyes": {
         "both": {
-          "y": -3
+          "y": -3,
+          "wet": 0.4
         }
       },
       "sequence": {
