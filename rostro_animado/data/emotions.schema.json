@@ -79,10 +79,11 @@
         "antics": { "type": "boolean" },
         "gaze": { "type": "boolean" },
         "transition": { "type": "number", "minimum": 0 },
-           /* AUTO:MOUTH-ENUM-BEGIN — generado por tools/seed-to-json.js a partir de src/core/geometry.js: NO EDITAR A MANO */
-        "mouth": { "enum": ["smile", "grin", "o", "flat", "frown", "wavy",
-         "pout", "open", "dot", "laugh", "shout", "smirk", "sob", "yawn", "kiss", "tongue"] },
-        /* AUTO:MOUTH-ENUM-END */
+           
+        "mouth": { "enum": ["smile", "grin", "o", "flat", "frown",
+         "wavy", "pout", "open", "dot", "laugh", "shout", "smirk", "sob",
+          "yawn", "kiss", "tongue", "grimace", "openO", "smileOpen", "frownOpen"] },
+        
         "face": {
           "type": "object",
           "properties": {

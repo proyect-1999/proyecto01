@@ -1888,6 +1888,2116 @@
           }
         ]
       }
+    },
+    {
+      "id": "e1f600",
+      "cp": 128512,
+      "name": "Sonrisa radiante",
+      "group": "emotion",
+      "desc": "Ojos cerrados en arco de sonrisa y boca amplia abierta; alegría desbordada",
+      "en": {
+        "name": "Beaming Grin",
+        "desc": "Ojos cerrados en arco de sonrisa y boca amplia abierta; alegría desbordada"
+      },
+      "transition": 420,
+      "pool": [
+        "happy",
+        "happy2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2500,
+        5000
+      ],
+      "mouth": "laugh",
+      "body": {
+        "y": -2,
+        "breathe": 0.013,
+        "color": "@soft"
+      },
+      "eyes": {
+        "both": {
+          "y": -2
+        }
+      }
+    },
+    {
+      "id": "e1f601",
+      "cp": 128513,
+      "name": "Sonrisa amplia",
+      "group": "emotion",
+      "desc": "Boca abierta de oreja a oreja, ojos amables bien abiertos",
+      "en": {
+        "name": "Grinning Face",
+        "desc": "Boca abierta de oreja a oreja, ojos amables bien abiertos"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "calm2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "grin",
+      "body": {
+        "breathe": 0.013
+      },
+      "eyes": {
+        "both": {
+          "y": -1
+        }
+      }
+    },
+    {
+      "id": "e1f602",
+      "cp": 128514,
+      "name": "Risa con lágrimas",
+      "group": "emotion",
+      "desc": "Carcajada torcida con lágrimas rodando en ambas comisuras",
+      "en": {
+        "name": "Tears of Joy",
+        "desc": "Carcajada torcida con lágrimas rodando en ambas comisuras"
+      },
+      "transition": 420,
+      "pool": [
+        "happy",
+        "squint"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2200,
+        4500
+      ],
+      "mouth": "laugh",
+      "body": {
+        "y": -2,
+        "rotate": 2,
+        "breathe": 0.015
+      },
+      "eyes": {
+        "both": {
+          "wet": 0.9,
+          "lookY": -1
+        }
+      },
+      "anims": [
+        {
+          "target": "body",
+          "prop": "rotate",
+          "type": "sine",
+          "amp": 1.6,
+          "period": 1100
+        }
+      ]
+    },
+    {
+      "id": "e1f603",
+      "cp": 128515,
+      "name": "Sonrisa con boca abierta",
+      "group": "emotion",
+      "desc": "Ojos brillantes abiertos con sonrisa franca de boca abierta",
+      "en": {
+        "name": "Open Mouth Smile",
+        "desc": "Ojos brillantes abiertos con sonrisa franca de boca abierta"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "calm2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "smileOpen",
+      "body": {
+        "breathe": 0.012
+      },
+      "eyes": {
+        "both": {
+          "y": -1
+        }
+      }
+    },
+    {
+      "id": "e1f604",
+      "cp": 128516,
+      "name": "Risa húmeda",
+      "group": "emotion",
+      "desc": "Arcos de risa con destello húmedo, reír hasta llorar",
+      "en": {
+        "name": "Laughing with Tears",
+        "desc": "Arcos de risa con destello húmedo, reír hasta llorar"
+      },
+      "transition": 420,
+      "pool": [
+        "happy",
+        "happy2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2500,
+        5000
+      ],
+      "mouth": "laugh",
+      "body": {
+        "y": -2,
+        "breathe": 0.013,
+        "color": "@soft"
+      },
+      "eyes": {
+        "both": {
+          "y": -2,
+          "wet": 0.8
+        }
+      }
+    },
+    {
+      "id": "e1f605",
+      "cp": 128517,
+      "name": "Sonrisa con sudor",
+      "group": "emotion",
+      "desc": "Media sonrisa algo forzada, alivio tras el susto",
+      "en": {
+        "name": "Hot-faced Smile",
+        "desc": "Media sonrisa algo forzada, alivio tras el susto"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "squint"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3500,
+        7000
+      ],
+      "mouth": "smileOpen",
+      "body": {
+        "breathe": 0.011
+      },
+      "eyes": {
+        "left": {
+          "lookX": 2
+        }
+      }
+    },
+    {
+      "id": "e1f606",
+      "cp": 128518,
+      "name": "Risa a carcajadas",
+      "group": "emotion",
+      "desc": "Ojos fuertemente entrecerrados, cabeza echada atrás, carcajada",
+      "en": {
+        "name": "Squinting Laugh",
+        "desc": "Ojos fuertemente entrecerrados, cabeza echada atrás, carcajada"
+      },
+      "transition": 420,
+      "pool": [
+        "happy2",
+        "happy"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2000,
+        4000
+      ],
+      "mouth": "laugh",
+      "body": {
+        "y": -3,
+        "rotate": 4,
+        "breathe": 0.016
+      },
+      "eyes": {
+        "both": {
+          "wet": 0.7
+        }
+      },
+      "anims": [
+        {
+          "target": "body",
+          "prop": "rotate",
+          "type": "sine",
+          "amp": 2.4,
+          "period": 900
+        }
+      ]
+    },
+    {
+      "id": "e1f607",
+      "cp": 128519,
+      "name": "Sonrisa con aureola",
+      "group": "emotion",
+      "desc": "Mirada suave y rubor leve, sonrisa serena en calma",
+      "en": {
+        "name": "Halo Smile",
+        "desc": "Mirada suave y rubor leve, sonrisa serena en calma"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "shy"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        8000
+      ],
+      "mouth": "smile",
+      "body": {
+        "y": -3,
+        "breathe": 0.009,
+        "color": "@soft"
+      },
+      "face": {
+        "blush": 0.5
+      }
+    },
+    {
+      "id": "e1f608",
+      "cp": 128520,
+      "name": "Sonrisa pícara",
+      "group": "emotion",
+      "desc": "Comisura ladeada y media mirada traviesa, travesura contenida",
+      "en": {
+        "name": "Mischievous Grin",
+        "desc": "Comisura ladeada y media mirada traviesa, travesura contenida"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "squint2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3500,
+        7000
+      ],
+      "mouth": "smirk",
+      "body": {
+        "rotate": -3,
+        "breathe": 0.008
+      },
+      "eyes": {
+        "both": {
+          "lookY": -2,
+          "pupil": 0.9
+        }
+      }
+    },
+    {
+      "id": "e1f609",
+      "cp": 128521,
+      "name": "Guiño",
+      "group": "emotion",
+      "desc": "Un ojo cerrado en guiño sostenido, sonrisa torcida de picardía",
+      "en": {
+        "name": "Wink",
+        "desc": "Un ojo cerrado en guiño sostenido, sonrisa torcida de picardía"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "calm2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        9000
+      ],
+      "mouth": "smirk",
+      "eyes": {
+        "right": {
+          "open": 0.08,
+          "lookX": 2
+        }
+      }
+    },
+    {
+      "id": "e1f60a",
+      "cp": 128522,
+      "name": "Sonrisa sonriente",
+      "group": "emotion",
+      "desc": "Ojos en media luna y mejillas encendidas, ternura simple",
+      "en": {
+        "name": "Blush Smile",
+        "desc": "Ojos en media luna y mejillas encendidas, ternura simple"
+      },
+      "transition": 420,
+      "pool": [
+        "happy",
+        "happy2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "smile",
+      "body": {
+        "breathe": 0.011,
+        "color": "@soft"
+      },
+      "eyes": {
+        "both": {
+          "y": -1
+        }
+      },
+      "face": {
+        "blush": 1
+      }
+    },
+    {
+      "id": "e1f60b",
+      "cp": 128523,
+      "name": "Saboreando",
+      "group": "emotion",
+      "desc": "Lengua asomada al lado, mirada de antojo",
+      "en": {
+        "name": "Savoring Food",
+        "desc": "Lengua asomada al lado, mirada de antojo"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "listen"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        8000
+      ],
+      "mouth": "tongue",
+      "eyes": {
+        "both": {
+          "lookX": 5,
+          "lookY": 2
+        }
+      }
+    },
+    {
+      "id": "e1f60c",
+      "cp": 128524,
+      "name": "Con comida en la boca",
+      "group": "emotion",
+      "desc": "Boca apretada masticando, ojos entrecerrados de satisfacción",
+      "en": {
+        "name": "Full Mouth",
+        "desc": "Boca apretada masticando, ojos entrecerrados de satisfacción"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "calm"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        8000
+      ],
+      "mouth": "flat",
+      "anims": [
+        {
+          "target": "face",
+          "prop": "mouthSX",
+          "type": "pulse",
+          "amp": 0.06,
+          "period": 700
+        }
+      ]
+    },
+    {
+      "id": "e1f60d",
+      "cp": 128525,
+      "name": "Enamorado",
+      "group": "emotion",
+      "desc": "Ojos muy abiertos latiendo de admiración, boca sonriente abierta",
+      "en": {
+        "name": "Heart Eyes",
+        "desc": "Ojos muy abiertos latiendo de admiración, boca sonriente abierta"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "wide2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "smileOpen",
+      "body": {
+        "y": -2,
+        "breathe": 0.013,
+        "color": "@blush"
+      },
+      "face": {
+        "blush": 1
+      },
+      "anims": [
+        {
+          "target": "eyes",
+          "prop": "scaleX",
+          "type": "sine",
+          "amp": 0.04,
+          "period": 1400
+        },
+        {
+          "target": "eyes",
+          "prop": "scaleY",
+          "type": "sine",
+          "amp": 0.04,
+          "period": 1400
+        }
+      ]
+    },
+    {
+      "id": "e1f60e",
+      "cp": 128526,
+      "name": "Con gafas de sol",
+      "group": "emotion",
+      "desc": "Entrecierre relajado y comisura segura, actitud impecable",
+      "en": {
+        "name": "Cool Face",
+        "desc": "Entrecierre relajado y comisura segura, actitud impecable"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "angry2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        5000,
+        10000
+      ],
+      "mouth": "smirk",
+      "body": {
+        "rotate": -2,
+        "breathe": 0.007
+      },
+      "eyes": {
+        "both": {
+          "lookY": 1
+        }
+      }
+    },
+    {
+      "id": "e1f60f",
+      "cp": 128527,
+      "name": "Media sonrisa escéptica",
+      "group": "emotion",
+      "desc": "Comisura torcida con la mirada cruzada, duda divertida",
+      "en": {
+        "name": "Smirking Face",
+        "desc": "Comisura torcida con la mirada cruzada, duda divertida"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "squint2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        8000
+      ],
+      "mouth": "smirk",
+      "eyes": {
+        "both": {
+          "lookX": 4
+        }
+      }
+    },
+    {
+      "id": "e1f610",
+      "cp": 128528,
+      "name": "Neutro",
+      "group": "emotion",
+      "desc": "Rasgos en reposo absoluto, sin juicio ni emoción",
+      "en": {
+        "name": "Neutral Face",
+        "desc": "Rasgos en reposo absoluto, sin juicio ni emoción"
+      },
+      "transition": 420,
+      "pool": [
+        "calm"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        5000,
+        11000
+      ],
+      "mouth": "flat",
+      "body": {
+        "breathe": 0.008
+      }
+    },
+    {
+      "id": "e1f611",
+      "cp": 128529,
+      "name": "Sin expresión",
+      "group": "emotion",
+      "desc": "Párpados a media apertura fijos, línea plana: indiferencia total",
+      "en": {
+        "name": "Expressionless",
+        "desc": "Párpados a media apertura fijos, línea plana: indiferencia total"
+      },
+      "transition": 420,
+      "pool": [
+        "scan",
+        "scan2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "flat",
+      "openness": 0.55,
+      "body": {
+        "breathe": 0.004
+      }
+    },
+    {
+      "id": "e1f612",
+      "cp": 128530,
+      "name": "Incómodo",
+      "group": "emotion",
+      "desc": "Dientes apretados en media sonrisa forzada, mirada huidiza",
+      "en": {
+        "name": "Awkward Smile",
+        "desc": "Dientes apretados en media sonrisa forzada, mirada huidiza"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "sad"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        5000,
+        9000
+      ],
+      "mouth": "grimace",
+      "eyes": {
+        "both": {
+          "lookX": 6,
+          "lookY": 2
+        }
+      }
+    },
+    {
+      "id": "e1f613",
+      "cp": 128531,
+      "name": "Sudor frío",
+      "group": "emotion",
+      "desc": "Cejo caído y mueca pequeña, tensión con gota fría",
+      "en": {
+        "name": "Nervous Sweat",
+        "desc": "Cejo caído y mueca pequeña, tensión con gota fría"
+      },
+      "transition": 420,
+      "pool": [
+        "squint2",
+        "listen"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2500,
+        5000
+      ],
+      "mouth": "wavy",
+      "body": {
+        "y": 1,
+        "breathe": 0.006
+      },
+      "eyes": {
+        "both": {
+          "lookY": 3
+        }
+      }
+    },
+    {
+      "id": "e1f614",
+      "cp": 128532,
+      "name": "Pensativo",
+      "group": "emotion",
+      "desc": "Párpados bajos mirando al suelo, boca caída de melancolía",
+      "en": {
+        "name": "Pensive",
+        "desc": "Párpados bajos mirando al suelo, boca caída de melancolía"
+      },
+      "transition": 420,
+      "pool": [
+        "sleepy",
+        "sad"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        5000,
+        10000
+      ],
+      "mouth": "frown",
+      "body": {
+        "y": 2,
+        "rotate": -2,
+        "breathe": 0.007,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 5
+        }
+      }
+    },
+    {
+      "id": "e1f615",
+      "cp": 128533,
+      "name": "Perplejo",
+      "group": "emotion",
+      "desc": "Ojos apretados y boca ondulada, perplejidad sin respuesta",
+      "en": {
+        "name": "Confounded",
+        "desc": "Ojos apretados y boca ondulada, perplejidad sin respuesta"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "squint2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3500,
+        6500
+      ],
+      "mouth": "wavy",
+      "body": {
+        "rotate": 2,
+        "breathe": 0.007
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": 6
+      }
+    },
+    {
+      "id": "e1f616",
+      "cp": 128534,
+      "name": "Perseverante",
+      "group": "emotion",
+      "desc": "Dientes apretados y cejas juntas, aguantar el esfuerzo",
+      "en": {
+        "name": "Persevering",
+        "desc": "Dientes apretados y cejas juntas, aguantar el esfuerzo"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "angry2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        7000
+      ],
+      "mouth": "grimace",
+      "body": {
+        "y": 1,
+        "breathe": 0.005
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": 8,
+        "browRaise": -1
+      }
+    },
+    {
+      "id": "e1f617",
+      "cp": 128535,
+      "name": "Beso con corazón",
+      "group": "emotion",
+      "desc": "Labios fruncidos hacia un lado con guiño cómplice",
+      "en": {
+        "name": "Heart Kiss",
+        "desc": "Labios fruncidos hacia un lado con guiño cómplice"
+      },
+      "transition": 420,
+      "pool": [
+        "shy",
+        "calm"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3500,
+        7000
+      ],
+      "mouth": "kiss",
+      "body": {
+        "rotate": 4,
+        "breathe": 0.011,
+        "color": "@blush"
+      },
+      "eyes": {
+        "right": {
+          "open": 0.1
+        },
+        "left": {
+          "lookX": -3
+        }
+      },
+      "face": {
+        "blush": 0.8
+      }
+    },
+    {
+      "id": "e1f618",
+      "cp": 128536,
+      "name": "Lanzando un beso",
+      "group": "emotion",
+      "desc": "Óvalo de beso soplado, un ojo cerrado con afecto",
+      "en": {
+        "name": "Blowing a Kiss",
+        "desc": "Óvalo de beso soplado, un ojo cerrado con afecto"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "happy"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        8000
+      ],
+      "mouth": "kiss",
+      "body": {
+        "breathe": 0.011,
+        "color": "@blush"
+      },
+      "eyes": {
+        "left": {
+          "open": 0.12
+        }
+      }
+    },
+    {
+      "id": "e1f619",
+      "cp": 128537,
+      "name": "Beso sereno",
+      "group": "emotion",
+      "desc": "Ojos suavemente cerrados y labios fruncidos, entrega tranquila",
+      "en": {
+        "name": "Kissing Face",
+        "desc": "Ojos suavemente cerrados y labios fruncidos, entrega tranquila"
+      },
+      "transition": 420,
+      "pool": [
+        "closed2",
+        "closed"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "kiss",
+      "body": {
+        "y": -1,
+        "breathe": 0.01,
+        "color": "@soft"
+      }
+    },
+    {
+      "id": "e1f61a",
+      "cp": 128538,
+      "name": "Beso cariñoso",
+      "group": "emotion",
+      "desc": "Fruncir los labios con los ojos apretados, cariño directo",
+      "en": {
+        "name": "Closed-Eyes Kiss",
+        "desc": "Fruncir los labios con los ojos apretados, cariño directo"
+      },
+      "transition": 420,
+      "pool": [
+        "closed",
+        "closed2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "pout",
+      "body": {
+        "rotate": 3,
+        "breathe": 0.01,
+        "color": "@blush"
+      },
+      "face": {
+        "blush": 0.7
+      }
+    },
+    {
+      "id": "e1f61b",
+      "cp": 128539,
+      "name": "Lengua fuera",
+      "group": "emotion",
+      "desc": "Lengua burlona colgando, guiño travieso",
+      "en": {
+        "name": "Tongue Out",
+        "desc": "Lengua burlona colgando, guiño travieso"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "calm"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3500,
+        7000
+      ],
+      "mouth": "tongue",
+      "body": {
+        "rotate": -2,
+        "breathe": 0.012
+      },
+      "anims": [
+        {
+          "target": "face",
+          "prop": "mouthSY",
+          "type": "sine",
+          "amp": 0.05,
+          "period": 1600
+        }
+      ]
+    },
+    {
+      "id": "e1f61c",
+      "cp": 128540,
+      "name": "Lengua con guiño",
+      "group": "emotion",
+      "desc": "Lengua fuera con guiño, provocación juguetona",
+      "en": {
+        "name": "Winking Tongue",
+        "desc": "Lengua fuera con guiño, provocación juguetona"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "squint"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3500,
+        7000
+      ],
+      "mouth": "tongue",
+      "body": {
+        "rotate": 2,
+        "breathe": 0.012
+      },
+      "eyes": {
+        "right": {
+          "open": 0.1
+        }
+      }
+    },
+    {
+      "id": "e1f61d",
+      "cp": 128541,
+      "name": "Locuela",
+      "group": "emotion",
+      "desc": "Ojos desparejados y lengua afuera, payasada máxima",
+      "en": {
+        "name": "Zany Face",
+        "desc": "Ojos desparejados y lengua afuera, payasada máxima"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "squint2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2500,
+        5000
+      ],
+      "mouth": "tongue",
+      "body": {
+        "rotate": -5,
+        "y": -2,
+        "breathe": 0.014
+      },
+      "eyes": {
+        "left": {
+          "scaleX": 1.15,
+          "scaleY": 1.15
+        },
+        "right": {
+          "open": 0.15
+        }
+      }
+    },
+    {
+      "id": "e1f61e",
+      "cp": 128542,
+      "name": "Decepcionado",
+      "group": "emotion",
+      "desc": "Mirada hundida y boca caída lenta, esperar y no recibir",
+      "en": {
+        "name": "Disappointed",
+        "desc": "Mirada hundida y boca caída lenta, esperar y no recibir"
+      },
+      "transition": 420,
+      "pool": [
+        "sad",
+        "sleepy"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4500,
+        9000
+      ],
+      "mouth": "frown",
+      "body": {
+        "y": 2,
+        "breathe": 0.007,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 4
+        }
+      }
+    },
+    {
+      "id": "e1f61f",
+      "cp": 128543,
+      "name": "Preocupado",
+      "group": "emotion",
+      "desc": "Cejas elevadas de angustia, boca temblorosa entreabierta",
+      "en": {
+        "name": "Worried",
+        "desc": "Cejas elevadas de angustia, boca temblorosa entreabierta"
+      },
+      "transition": 420,
+      "pool": [
+        "sad",
+        "squint"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "frownOpen",
+      "body": {
+        "y": 1,
+        "breathe": 0.006
+      },
+      "eyes": {
+        "both": {
+          "lookY": 3,
+          "wet": 0.35
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": 9,
+        "browRaise": 2
+      }
+    },
+    {
+      "id": "e1f620",
+      "cp": 128544,
+      "name": "Furioso",
+      "group": "emotion",
+      "desc": "Cejas en V clavadas en la mirada, gruñido tenso",
+      "en": {
+        "name": "Angry",
+        "desc": "Cejas en V clavadas en la mirada, gruñido tenso"
+      },
+      "transition": 420,
+      "pool": [
+        "angry",
+        "angry2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        8000
+      ],
+      "mouth": "frown",
+      "body": {
+        "y": 1,
+        "breathe": 0.004,
+        "color": "@angry"
+      },
+      "eyes": {
+        "both": {
+          "pupil": 0.8
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": -13,
+        "browRaise": -2
+      },
+      "anims": [
+        {
+          "target": "body",
+          "prop": "x",
+          "type": "jitter",
+          "amp": 0.9,
+          "speed": 7
+        }
+      ]
+    },
+    {
+      "id": "e1f621",
+      "cp": 128545,
+      "name": "Bufando",
+      "group": "emotion",
+      "desc": "Labios hinchados de disgusto con ceño bajo y respiración corta",
+      "en": {
+        "name": "Huffing Pout",
+        "desc": "Labios hinchados de disgusto con ceño bajo y respiración corta"
+      },
+      "transition": 420,
+      "pool": [
+        "angry2",
+        "squint"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4500,
+        9000
+      ],
+      "mouth": "pout",
+      "body": {
+        "y": 2,
+        "rotate": -3,
+        "breathe": 0.005,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 5,
+          "pupil": 0.85
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": -8
+      }
+    },
+    {
+      "id": "e1f622",
+      "cp": 128546,
+      "name": "Llorando",
+      "group": "emotion",
+      "desc": "Boca temblorosa abierta y lágrima corriendo, pena visible",
+      "en": {
+        "name": "Crying",
+        "desc": "Boca temblorosa abierta y lágrima corriendo, pena visible"
+      },
+      "transition": 420,
+      "pool": [
+        "sad",
+        "sleepy"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2500,
+        5000
+      ],
+      "mouth": "frownOpen",
+      "body": {
+        "y": 3,
+        "breathe": 0.008,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 4,
+          "wet": 1
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": 10,
+        "browRaise": 3
+      }
+    },
+    {
+      "id": "e1f623",
+      "cp": 128547,
+      "name": "Aguantando con lágrima",
+      "group": "emotion",
+      "desc": "Dientes apretados aguanta, una lágrima traicionera escapa",
+      "en": {
+        "name": "Enduring Tear",
+        "desc": "Dientes apretados aguanta, una lágrima traicionera escapa"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "angry2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3500,
+        6500
+      ],
+      "mouth": "grimace",
+      "body": {
+        "y": 1,
+        "breathe": 0.006
+      },
+      "eyes": {
+        "left": {
+          "wet": 0.9,
+          "lookY": 2
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": 5
+      }
+    },
+    {
+      "id": "e1f624",
+      "cp": 128548,
+      "name": "Uf, qué susto",
+      "group": "emotion",
+      "desc": "Ojos cerrados de alivio soplando el susto por la boca",
+      "en": {
+        "name": "Relieved Sweat",
+        "desc": "Ojos cerrados de alivio soplando el susto por la boca"
+      },
+      "transition": 420,
+      "pool": [
+        "closed2",
+        "calm"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        8000
+      ],
+      "mouth": "open",
+      "body": {
+        "y": -1,
+        "breathe": 0.016
+      },
+      "eyes": {
+        "both": {
+          "open": 0.5
+        }
+      }
+    },
+    {
+      "id": "e1f625",
+      "cp": 128549,
+      "name": "Ansioso",
+      "group": "emotion",
+      "desc": "Boca entreabierta preocupada, conteniendo el aliento",
+      "en": {
+        "name": "Anxious Sweat",
+        "desc": "Boca entreabierta preocupada, conteniendo el aliento"
+      },
+      "transition": 420,
+      "pool": [
+        "listen",
+        "squint2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "frownOpen",
+      "body": {
+        "y": 1,
+        "breathe": 0.006,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 3,
+          "pupil": 1.1
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": 8,
+        "browRaise": 3
+      }
+    },
+    {
+      "id": "e1f626",
+      "cp": 128550,
+      "name": "Queja",
+      "group": "emotion",
+      "desc": "Boca abierta ovalada con ceño triste, queja silenciosa",
+      "en": {
+        "name": "Frowning Open Mouth",
+        "desc": "Boca abierta ovalada con ceño triste, queja silenciosa"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "sad"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3500,
+        7000
+      ],
+      "mouth": "openO",
+      "body": {
+        "y": 1,
+        "breathe": 0.005
+      },
+      "eyes": {
+        "both": {
+          "lookY": 2
+        }
+      }
+    },
+    {
+      "id": "e1f627",
+      "cp": 128551,
+      "name": "Angustiado",
+      "group": "emotion",
+      "desc": "Grito contenido de desesperación, mirada derrumbada",
+      "en": {
+        "name": "Anguished",
+        "desc": "Grito contenido de desesperación, mirada derrumbada"
+      },
+      "transition": 420,
+      "pool": [
+        "wide2",
+        "squint"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "openO",
+      "body": {
+        "y": 2,
+        "rotate": -2,
+        "breathe": 0.005,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 4,
+          "pupil": 1.15
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": 10
+      }
+    },
+    {
+      "id": "e1f628",
+      "cp": 128552,
+      "name": "Atónito",
+      "group": "emotion",
+      "desc": "Ojos desorbitados y boca en óvalo, shock que congela",
+      "en": {
+        "name": "Astounded",
+        "desc": "Ojos desorbitados y boca en óvalo, shock que congela"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "wide2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2000,
+        4000
+      ],
+      "mouth": "openO",
+      "body": {
+        "y": -2,
+        "scale": 1.02,
+        "breathe": 0.005
+      },
+      "eyes": {
+        "both": {
+          "pupil": 1.3
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browRaise": 6,
+        "browTilt": 6
+      }
+    },
+    {
+      "id": "e1f629",
+      "cp": 128553,
+      "name": "Agotado",
+      "group": "emotion",
+      "desc": "Bostezo largo con párpados a medio caer, arrastrarse",
+      "en": {
+        "name": "Weary",
+        "desc": "Bostezo largo con párpados a medio caer, arrastrarse"
+      },
+      "transition": 420,
+      "pool": [
+        "sleepy",
+        "closed2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "yawn",
+      "openness": 0.45,
+      "body": {
+        "y": 4,
+        "rotate": -3,
+        "breathe": 0.018,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 4
+        }
+      }
+    },
+    {
+      "id": "e1f62a",
+      "cp": 128554,
+      "name": "Durmiendo",
+      "group": "emotion",
+      "desc": "Ojos sellados y boca mínima, respiración profunda con zzz",
+      "en": {
+        "name": "Sleeping Face",
+        "desc": "Ojos sellados y boca mínima, respiración profunda con zzz"
+      },
+      "transition": 420,
+      "pool": [
+        "closed",
+        "closed2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "dot",
+      "openness": 0.08,
+      "body": {
+        "y": 4,
+        "rotate": -2,
+        "breathe": 0.02,
+        "color": "@dim",
+        "zzz": 1
+      },
+      "eyes": {
+        "both": {
+          "y": 4,
+          "lookY": 2
+        }
+      },
+      "anims": [
+        {
+          "target": "eyes",
+          "prop": "y",
+          "type": "sine",
+          "amp": 1.2,
+          "period": 3600
+        }
+      ]
+    },
+    {
+      "id": "e1f62b",
+      "cp": 128555,
+      "name": "Somnoliento",
+      "group": "emotion",
+      "desc": "Bostezo pesado con ojos casi cerrados, rendirse al sueño",
+      "en": {
+        "name": "Sleepy Yawn",
+        "desc": "Bostezo pesado con ojos casi cerrados, rendirse al sueño"
+      },
+      "transition": 420,
+      "pool": [
+        "sleepy",
+        "closed"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "yawn",
+      "openness": 0.35,
+      "body": {
+        "y": 3,
+        "breathe": 0.016,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 5
+        }
+      }
+    },
+    {
+      "id": "e1f62c",
+      "cp": 128556,
+      "name": "Exhausto",
+      "group": "emotion",
+      "desc": "Jadeo agotado, párpados caídos por cansancio acumulado",
+      "en": {
+        "name": "Tired Face",
+        "desc": "Jadeo agotado, párpados caídos por cansancio acumulado"
+      },
+      "transition": 420,
+      "pool": [
+        "sleepy",
+        "sad"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "openO",
+      "openness": 0.4,
+      "body": {
+        "y": 4,
+        "rotate": 2,
+        "breathe": 0.018,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 5,
+          "pupil": 0.9
+        }
+      }
+    },
+    {
+      "id": "e1f62d",
+      "cp": 128557,
+      "name": "Asombrado",
+      "group": "emotion",
+      "desc": "Golpe de sorpresa instantáneo: todo se abre de golpe y tiembla",
+      "en": {
+        "name": "Shock",
+        "desc": "Golpe de sorpresa instantáneo: todo se abre de golpe y tiembla"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "wide2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "open",
+      "body": {
+        "y": -3,
+        "scale": 1.03,
+        "breathe": 0.004
+      },
+      "eyes": {
+        "both": {
+          "pupil": 1.4,
+          "scaleX": 1.1,
+          "scaleY": 1.1
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browRaise": 8
+      },
+      "sequence": {
+        "settle": "base",
+        "frames": [
+          {
+            "at": 0,
+            "eyes": {
+              "both": {
+                "scaleX": 0.95,
+                "scaleY": 0.95
+              }
+            }
+          },
+          {
+            "at": 140,
+            "eyes": {
+              "both": {
+                "scaleX": 1.25,
+                "scaleY": 1.25,
+                "y": -3
+              }
+            },
+            "body": {
+              "y": -5,
+              "scale": 1.04
+            }
+          },
+          {
+            "at": 420,
+            "eyes": {
+              "both": {
+                "scaleX": 1.1,
+                "scaleY": 1.1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "e1f62e",
+      "cp": 128558,
+      "name": "Boquiabierto",
+      "group": "emotion",
+      "desc": "Sorpresa sostenida con mandíbula suelta, procesando el dato",
+      "en": {
+        "name": "Open-Mouthed Surprise",
+        "desc": "Sorpresa sostenida con mandíbula suelta, procesando el dato"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "calm"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2500,
+        5000
+      ],
+      "mouth": "openO",
+      "body": {
+        "y": -2,
+        "breathe": 0.006
+      },
+      "eyes": {
+        "both": {
+          "pupil": 1.25
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browRaise": 5
+      }
+    },
+    {
+      "id": "e1f62f",
+      "cp": 128559,
+      "name": "Silbado",
+      "group": "emotion",
+      "desc": "Óvalo pequeño de asombro silencioso, dedo a los labios",
+      "en": {
+        "name": "Hushed",
+        "desc": "Óvalo pequeño de asombro silencioso, dedo a los labios"
+      },
+      "transition": 420,
+      "pool": [
+        "wide2",
+        "listen"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "o",
+      "body": {
+        "y": -1,
+        "breathe": 0.004
+      },
+      "eyes": {
+        "both": {
+          "pupil": 1.2
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browRaise": 6
+      }
+    },
+    {
+      "id": "e1f630",
+      "cp": 128560,
+      "name": "Helado de miedo",
+      "group": "emotion",
+      "desc": "Azorado helado: óvalo rígido, temblor fino y mirada gacha",
+      "en": {
+        "name": "Cold Sweat Fear",
+        "desc": "Azorado helado: óvalo rígido, temblor fino y mirada gacha"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "squint2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        2500,
+        4500
+      ],
+      "mouth": "openO",
+      "body": {
+        "y": 2,
+        "breathe": 0.004,
+        "color": "@off"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 4,
+          "pupil": 1.3
+        }
+      },
+      "anims": [
+        {
+          "target": "body",
+          "prop": "x",
+          "type": "jitter",
+          "amp": 1.2,
+          "speed": 10
+        }
+      ]
+    },
+    {
+      "id": "e1f631",
+      "cp": 128561,
+      "name": "Gritando",
+      "group": "emotion",
+      "desc": "Alarma total: ojos desorbitados hacia arriba y boca de grito",
+      "en": {
+        "name": "Screaming in Fear",
+        "desc": "Alarma total: ojos desorbitados hacia arriba y boca de grito"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "wide2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "shout",
+      "body": {
+        "y": -4,
+        "scale": 1.04,
+        "breathe": 0.004,
+        "color": "@alert"
+      },
+      "eyes": {
+        "both": {
+          "pupil": 1.45,
+          "y": -2
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browRaise": 8,
+        "browTilt": 8
+      },
+      "anims": [
+        {
+          "target": "eyes",
+          "prop": "lookX",
+          "type": "jitter",
+          "amp": 4,
+          "speed": 11
+        },
+        {
+          "target": "eyes",
+          "prop": "lookY",
+          "type": "jitter",
+          "amp": 3,
+          "speed": 9
+        }
+      ]
+    },
+    {
+      "id": "e1f632",
+      "cp": 128562,
+      "name": "Herido pero sonriente",
+      "group": "emotion",
+      "desc": "Media sonrisa valiente tras la herida, mirar de reojo",
+      "en": {
+        "name": "Healing Bandage",
+        "desc": "Media sonrisa valiente tras la herida, mirar de reojo"
+      },
+      "transition": 420,
+      "pool": [
+        "sad",
+        "calm"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4500,
+        9000
+      ],
+      "mouth": "smile",
+      "body": {
+        "y": 2,
+        "rotate": 3,
+        "breathe": 0.009,
+        "color": "@dim"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 2,
+          "wet": 0.3
+        }
+      },
+      "face": {
+        "blush": 0.4
+      }
+    },
+    {
+      "id": "e1f633",
+      "cp": 128563,
+      "name": "Abochornado",
+      "group": "emotion",
+      "desc": "Rubor total con óvalo de bochorno, no saber dónde mirar",
+      "en": {
+        "name": "Flushed Embarrassed",
+        "desc": "Rubor total con óvalo de bochorno, no saber dónde mirar"
+      },
+      "transition": 420,
+      "pool": [
+        "wide",
+        "shy"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        3000,
+        6000
+      ],
+      "mouth": "openO",
+      "body": {
+        "y": 1,
+        "breathe": 0.008,
+        "color": "@blush"
+      },
+      "eyes": {
+        "both": {
+          "lookX": 6,
+          "lookY": 2,
+          "pupil": 1.1
+        }
+      },
+      "face": {
+        "blush": 1
+      }
+    },
+    {
+      "id": "e1f634",
+      "cp": 128564,
+      "name": "Aliviado",
+      "group": "emotion",
+      "desc": "Soltar el aire contenido: ojos cerrados en paz y leve sonrisa",
+      "en": {
+        "name": "Relief Exhale",
+        "desc": "Soltar el aire contenido: ojos cerrados en paz y leve sonrisa"
+      },
+      "transition": 420,
+      "pool": [
+        "closed",
+        "closed2"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": null,
+      "mouth": "smile",
+      "openness": 0.15,
+      "body": {
+        "y": -1,
+        "breathe": 0.02
+      },
+      "sequence": {
+        "settle": "hold",
+        "frames": [
+          {
+            "at": 0,
+            "body": {
+              "y": -3,
+              "scale": 1.02
+            }
+          },
+          {
+            "at": 900,
+            "body": {
+              "y": -1,
+              "scale": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "e1f635",
+      "cp": 128565,
+      "name": "Humo por la rabia",
+      "group": "emotion",
+      "desc": "Furia hervida por dentro, dientes prietos y vapor por las orejas",
+      "en": {
+        "name": "Steaming With Rage",
+        "desc": "Furia hervida por dentro, dientes prietos y vapor por las orejas"
+      },
+      "transition": 420,
+      "pool": [
+        "squint",
+        "angry"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        4000,
+        7000
+      ],
+      "mouth": "grimace",
+      "body": {
+        "y": 1,
+        "breathe": 0.004,
+        "color": "@angry"
+      },
+      "eyes": {
+        "both": {
+          "pupil": 0.8
+        }
+      },
+      "face": {
+        "browVis": 1,
+        "browTilt": -12
+      },
+      "anims": [
+        {
+          "target": "body",
+          "prop": "x",
+          "type": "jitter",
+          "amp": 1.4,
+          "speed": 8
+        }
+      ]
+    },
+    {
+      "id": "e1f636",
+      "cp": 128566,
+      "name": "Sin boca",
+      "group": "emotion",
+      "desc": "Boca borrada en punto mínimo mudo, ojos que piden disculpas",
+      "en": {
+        "name": "Silenced",
+        "desc": "Boca borrada en punto mínimo mudo, ojos que piden disculpas"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "sad"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        5000,
+        10000
+      ],
+      "mouth": "dot",
+      "openness": 0.85,
+      "body": {
+        "y": 1,
+        "breathe": 0.006,
+        "color": "@dim"
+      }
+    },
+    {
+      "id": "e1f637",
+      "cp": 128567,
+      "name": "Con mascarilla",
+      "group": "emotion",
+      "desc": "Respiración forzada tras la barrera, mirada apagada de convalecencia",
+      "en": {
+        "name": "Masked Ill",
+        "desc": "Respiración forzada tras la barrera, mirada apagada de convalecencia"
+      },
+      "transition": 420,
+      "pool": [
+        "calm",
+        "sleepy"
+      ],
+      "poolMs": [
+        2600,
+        4800
+      ],
+      "blinkMs": [
+        5000,
+        11000
+      ],
+      "mouth": "flat",
+      "body": {
+        "y": 2,
+        "breathe": 0.014,
+        "color": "@off"
+      },
+      "eyes": {
+        "both": {
+          "lookY": 3
+        }
+      }
     }
   ]
 }

@@ -50,13 +50,43 @@
     if (!isFinite(s.x) || !isFinite(s.v)) { s.x = s.t; s.v = 0; }
   }
 
-  /* Interpolación punto a punto entre dos anillos de contorno */
-  function lerpRing(a, b, t) {
-    var out = new Array(a.length);
-    for (var i = 0; i < a.length; i++) {
-      out[i] = [a[i][0] + (b[i][0] - a[i][0]) * t, a[i][1] + (b[i][1] - a[i][1]) * t];
+  /* Interpolación punto a punto entre dos anillos de contorno.
+   * P6 (rendimiento): variante con buffer reutilizable — se invoca en cada fotograma de
+   * transición ocular/bucal; sin destino preasignado la versión anterior generaba ~2 arrays
+   * por punto por frame (basura para el GC). `out` debe tener la misma longitud que los
+   * anillos (los anillos de una misma familia comparten n.º de puntos por construcción). */
+  function lerpRingInto(out, a, b, t) {
+    var n = Math.min(a ? a.length : 0, b ? b.length : 0);
+    /* R1: los anillos de origen/destino pueden tener longitudes distintas entre familias
+     * (p. ej. boca MOUTH_N=24 vs anillos oculares EYE_N=48, o pools personalizados).
+     * `out` es un buffer preasignado que puede estar parcialmente materializado, así que
+     * se rellena desde 0 hasta n — nunca depender del estado previo de `out`. */
+    if (!out || out.length !== n) {
+      if (!out) out = new Array(n);
+      else out.length = n;
+      for (var j = 0; j < n; j++) out[j] = [0, 0];
+    }
+    for (var i = 0; i < n; i++) {
+      /* FIX v22b: blindaje — si `out` llegó holey o con puntos no materiales
+       * (arrays sparse), se crea el punto en lugar de escribir sobre undefined. */
+      var p = out[i];
+      if (!p) p = out[i] = [0, 0];
+      var pa = a[i], pb = b[i];
+      if (!pa || !pb) continue;
+      p[0] = pa[0] + (pb[0] - pa[0]) * t;
+      p[1] = pa[1] + (pb[1] - pa[1]) * t;
     }
     return out;
+  }
+  function lerpRing(a, b, t) {
+    /* FIX v22b: `new Array(n)` creaba un array HOLEY (sin elementos materiales); al
+     * normalizarlo dentro de lerpRingInto se conservaban los huecos y `out[i]` era
+     * undefined → "Cannot set properties of undefined (setting '0')". Se materializa
+     * cada punto [0,0] antes de interpolary se blinda el acceso por índice. */
+    var n = Math.min(a ? a.length : 0, b ? b.length : 0);
+    var out = new Array(n);
+    for (var j = 0; j < n; j++) out[j] = [0, 0];
+    return lerpRingInto(out, a, b, t);
   }
 
   /* Rebote: 4 segmentos de parábola decreciente */
@@ -329,7 +359,11 @@
   var DEFAULT_EYE = { x: 0, y: 0, scaleX: 1, scaleY: 1, rotate: 0, open: 1, color: '@eye', lookX: 0, lookY: 0, pupil: 1, wet: 0 };
   var DEFAULT_FACE = {
     blush: 0, browVis: 0, browTilt: 0, browRaise: 0,
-    mouthX: 0, mouthY: 0, mouthSX: 1, mouthSY: 1
+    mouthX: 0, mouthY: 0, mouthSX: 1, mouthSY: 1,
+    /* v2.3 (tracking facial): giro de cabeza rastreado en radianes. Canal
+     * SEPARADO de body.yaw — este no alimenta los disparadores de partículas
+     * de spin (fx.js sigue leyendo exclusivamente body.yaw/dYaw). */
+    lookYaw: 0
   };
 
   function defaultPose() {
@@ -388,7 +422,8 @@
 
   function lerpPose(a, b, t) {
     var out = defaultPose();
-    POSE_PARTS.forEach(function (part) {
+    for (var pi = 0; pi < POSE_PARTS.length; pi++) {
+      var part = POSE_PARTS[pi];
       var pa = a[part], pb = b[part], po = out[part];
       for (var k in pb) {
         var vb = pb[k];
@@ -396,22 +431,45 @@
         else if (k === 'color') po[k] = lerpColor(pa[k] || vb, vb, t);
         else po[k] = vb;
       }
-    });
+    }
     return out;
   }
 
-  function sampleFrameList(frames, t) {
-    if (!frames.length) return null;
-    if (t <= frames[0].at) return clonePose(frames[0].pose);
-    var last = frames[frames.length - 1];
-    if (t >= last.at) return clonePose(last.pose);
-    for (var i = 0; i < frames.length - 1; i++) {
-      var a = frames[i], b = frames[i + 1];
-      if (t >= a.at && t < b.at) {
-        return lerpPose(a.pose, b.pose, easeInOutCubic((t - a.at) / (b.at - a.at)));
+  /* P8: muestreo binario de fotogramas de secuencia — la lineal O(n) por frame se
+   * convierte en O(log n), con fast-path de ventana deslizante vía `lo` (índice
+   * sugerido por el llamador; si t cae fuera de [lo, lo+1) se rehace la búsqueda
+   * completa, p. ej. tras saltos de pestaña o dt grandes).
+   * INVARIANTE: puede devolver una pose CONGELADA (Object.freeze) perteneciente a la
+   * secuencia — solo lectura. Los puntos de mutación (_compose, _applyClickBeat) deben
+   * clonar antes de escribir. `sampleFrameList` preserva la semántica histórica de
+   * siempre-devolver-copia para consumidores externos. */
+  function freezePose(p) {
+    Object.freeze(p.body); Object.freeze(p.left); Object.freeze(p.right);
+    Object.freeze(p.face); return Object.freeze(p);
+  }
+
+  function sampleFrames(frames, t, lo) {
+    var n = frames.length;
+    if (!n) return null;
+    if (t <= frames[0].at) return frames[0].pose;
+    if (t >= frames[n - 1].at) return frames[n - 1].pose;
+    var i0 = 0, i1 = n - 1;
+    if (lo > 0 && lo < n - 1 && frames[lo].at <= t && t < frames[lo + 1].at) {
+      i0 = lo; i1 = lo + 1;
+    } else {
+      while (i0 < i1 - 1) {
+        var m = (i0 + i1) >> 1;
+        if (frames[m].at <= t) i0 = m; else i1 = m;
       }
     }
-    return clonePose(last.pose);
+    var a = frames[i0], b = frames[i1];
+    return lerpPose(a.pose, b.pose, easeInOutCubic((t - a.at) / (b.at - a.at)));
+  }
+
+  /* Copia defensiva sobre el resultado (puede ser una pose congelada). */
+  function sampleFrameList(frames, t) {
+    var p = sampleFrames(frames, t);
+    return p ? clonePose(p) : null;
   }
 
   /* ---------------- Primitivas de animación ---------------- */
@@ -543,6 +601,11 @@
     if (raw.blinkProfile != null && !BLINK_PROFILES[raw.blinkProfile]) {
       errs.push('blinkProfile desconocido: ' + raw.blinkProfile);
     }
+    /* Extensión emoji (U+1F600–…): cp es el codepoint Unicode de referencia.
+     * Opcional; si se declara debe ser un entero positivo y estable por id. */
+    if (raw.cp != null && !(typeof raw.cp === 'number' && isFinite(raw.cp) && raw.cp >= 0)) {
+      errs.push('cp debe ser un codepoint numérico: ' + raw.cp);
+    }
     return errs;
   }
 
@@ -599,6 +662,7 @@
     if (!pool.length) pool = ['calm'];
     var def = {
       id: raw.id, name: raw.name, group: raw.group,
+      cp: raw.cp != null ? raw.cp : null,   /* extensión emoji: codepoint Unicode de referencia */
       desc: raw.desc || '',
       en: raw.en || null,
       gaze: raw.gaze !== false,
@@ -617,8 +681,11 @@
       raw: raw
     };
     if (raw.sequence) {
+      /* P8: los fotogramas se congelan tras precalcularlos — sampleFrames puede
+       * devolverlos directamente (cero clonación por frame); cualquier escritura
+       * accidental fuera del punto de mutación (_compose) falla en desarrollo. */
       var frames = raw.sequence.frames.map(function (f) {
-        return { at: f.at || 0, pose: resolvePoseColors(applySpec(clonePose(base), f), ch) };
+        return { at: f.at || 0, pose: freezePose(resolvePoseColors(applySpec(clonePose(base), f), ch)) };
       }).sort(function (x, y) { return x.at - y.at; });
       def.sequence = { frames: frames, settle: raw.sequence.settle || 'base' };
     }
@@ -698,6 +765,21 @@
       return order.map(function (id) { return registry.get(id); })
         .filter(function (d) { return enabledMap[d.id] !== false; })
         .filter(function (d) { return !group || d.group === group; });
+    },
+    /** Extensión emoji: resuelve una emoción por su codepoint Unicode (p. ej. 0x1F600).
+     *  Devuelve el raw registrado o null. Solo considera emociones con `cp` declarado. */
+    byCodepoint: function (cp) {
+      if (typeof cp !== 'number' || !isFinite(cp)) return null;
+      for (var i = 0; i < order.length; i++) {
+        var d = registry.get(order[i]);
+        if (d && d.cp === cp) return d;
+      }
+      return null;
+    },
+    /** Id de la emoción registrada para un codepoint (o null). */
+    idByCodepoint: function (cp) {
+      var d = MM.config.byCodepoint(cp);
+      return d ? d.id : null;
     },
     groups: function () {
       return GROUPS.map(function (g) { return { key: g.key, name: g.name, en: g.en || g.name }; });
@@ -784,6 +866,15 @@
     this._seed = Math.random() * 100;
     this._events = {};
     this._gaze = { x: 0, y: 0, tx: 0, ty: 0 };
+    /* v2.3 (tracking facial): árbitro de mirada — cada fuente (puntero, tracker)
+     * registra su objetivo con prioridad; gana la de mayor prioridad y las
+     * fuentes caducas (>400 ms sin actualización) se autoexpulsan, de modo que
+     * un tracker caído devuelve el control al puntero sin intervención externa. */
+    this._gazeSources = {};
+    this._lookYawTarget = null;      /* giro de cabeza rastreado (rad) o null */
+    this._lookYaw = spring(0);
+    this._eyeOpenExt = null;         /* apertura externa [0,1] o null (D15) */
+    this._eyeOpenExtSpring = null;
     this._style = { sketch: 0 };
     this._theme = opts.color
       ? { body: opts.color, eyes: opts.eyeColor || '#FFFFFF' }
@@ -813,6 +904,8 @@
     this._exprSlot = 'calm';
     this._poolPos = 0;
     this._poolNext = 0;
+    /* P6: buffers reutilizables de interpolación — evita asignaciones por fotograma */
+    this._ringBuf = [[], []];
 
      /* ---- subsistema de deformación de la boca ---- */
     var flat = ch.mouthShapes.flat;
@@ -822,6 +915,7 @@
     this._mouthSpring = spring(1);
     this._mouthSlot = 'flat';
     this._mouthHoldUntil = 0;
+    this._mouthBuf = [];
 
      /* ---- sistema de parpadeo ---- */
     this._open = spring(1);
@@ -901,6 +995,10 @@
     /* ---------- núcleo: cambiar emoción (con valor de respaldo) ---------- */
     setEmotion: function (id, o) {
       o = o || {};
+      /* v2.3: una orden de emoción explícita cuenta como actividad — reinicia el
+       * reloj idle para que un payload de IA no quede pisado por el standby a los
+       * 60 s ni por el sueño a los 180 s. */
+      if (!o.auto) this._lastActivity = performance.now();
       var def = this._getDef(id);
       if (!def) {
         console.warn('[MoodMates] emoción ID desconocida "' + id + '", recayendo en espera (' + this._fallbackId + ')');
@@ -917,7 +1015,7 @@
       this._transStart = now;
       this._transDur = this._prevPose ? def.transition : 0;
       this._seq = def.sequence
-        ? { frames: def.sequence.frames, settle: def.sequence.settle, done: false }
+        ? { frames: def.sequence.frames, settle: def.sequence.settle, done: false, lo: 0 }
         : null;
       if (!o.auto) this._lastActivity = now;
 
@@ -1004,15 +1102,57 @@
 
     resetIdle: function () { this._lastActivity = performance.now(); },
 
-    /* Punto de mira: desviación horizontal ±24, vertical ±15 (coordenadas viewBox) */
-    setGaze: function (nx, ny) {
-      this._gaze.tx = clamp(nx, -1, 1) * 24;
-      this._gaze.ty = clamp(ny, -1, 1) * 15;
+    /* Punto de mira: desviación horizontal ±24, vertical ±15 (coordenadas viewBox).
+     * v2.3 — firma extendida RETROCOMPATIBLE: setGaze(nx, ny[, {source, priority}]).
+     * Con 2 argumentos se usa la fuente 'default' prioridad 1 → comportamiento idéntico
+     * al anterior para todos los callers existentes. El árbitro (_arbitrateGaze) hace
+     * que la fuente de mayor prioridad gane (tracker=10 > puntero=1); las fuentes sin
+     * actualización durante >400 ms caducan y ceden el control automáticamente. */
+    setGaze: function (nx, ny, o) {
+      o = o || {};
+      var src = typeof o.source === 'string' && o.source ? o.source : 'default';
+      var pri = typeof o.priority === 'number' && isFinite(o.priority) ? o.priority : 1;
+      this._gazeSources[src] = {
+        x: clamp(nx, -1, 1),
+        y: clamp(ny, -1, 1),
+        pri: pri,
+        at: performance.now()
+      };
+      this._arbitrateGaze();
       return this;
     },
-    clearGaze: function () {
-      this._gaze.tx = 0;
-      this._gaze.ty = 0;
+    clearGaze: function (o) {
+      var src = (o && typeof o.source === 'string' && o.source) ? o.source : 'default';
+      delete this._gazeSources[src];
+      this._arbitrateGaze();
+      return this;
+    },
+    _arbitrateGaze: function () {
+      var best = null, now = performance.now();
+      for (var k in this._gazeSources) {
+        var s = this._gazeSources[k];
+        if (now - s.at > 400) { delete this._gazeSources[k]; continue; }  /* fuente caída */
+        if (!best || s.pri > best.pri) best = s;
+      }
+      this._gaze.tx = best ? best.x * 24 : 0;
+      this._gaze.ty = best ? best.y * 15 : 0;
+    },
+
+    /* v2.3 — giro de cabeza rastreado (radianes) por canal propio lookYaw.
+     * body.yaw queda reservado al spin elástico (fx/partículas). null/0 = reposo. */
+    setLookYaw: function (rad) {
+      var v = +rad;
+      this._lookYawTarget = isFinite(v) ? clamp(v, -0.85, 0.85) : 0;
+      return this;
+    },
+
+    /* v2.3 (D15) — apertura externa de párpados [0,1] desde EAR del tracker.
+     * Mezcla MULTIPLICATIVA con el parpadeo autónomo (los dos sobreviven);
+     * null devuelve el control íntegro al sistema de parpadeo interno. */
+    setEyeOpen: function (v) {
+      if (v == null) { this._eyeOpenExt = null; return this; }
+      var n = +v;
+      this._eyeOpenExt = isFinite(n) ? clamp(n, 0, 1) : null;
       return this;
     },
     setStyle: function (style) {
@@ -1257,7 +1397,9 @@
         if (res === 'switch') {
           return depth < 4 ? this._compose(now, depth + 1) : clonePose(this._def.base);
         }
-        pose = res || clonePose(def.base);
+        /* P8: sampleFrames puede devolver una pose congelada de la secuencia (inmutable);
+         * se clona aquí — único punto de mutación — para no corromper los fotogramas. */
+        pose = res ? clonePose(res) : clonePose(def.base);
       } else {
         pose = clonePose(def.base);
       }
@@ -1322,6 +1464,12 @@
         springStep(this._ringSpring, this._ringSpeed, 1, j);
         springStep(this._mouthSpring, 9, 1, j);
         springStep(this._open, 26, 1, j);
+        /* v2.3: el giro rastreado pasa por su propio resorte (ω=5): inercia
+         * natural de cabeza sin transmitir jitter de landmarks al render. */
+        if (this._lookYawTarget != null) {
+          this._lookYaw.t = this._lookYawTarget;
+          springStep(this._lookYaw, 5, 1, j);
+        }
         if (this._spin) {
           springStep(this._spin, 6.2, 1, j);
           if (Math.abs(this._spin.t - this._spin.x) < 0.01 && Math.abs(this._spin.v) < 0.05) {
@@ -1330,6 +1478,7 @@
         }
       }
       pose.body.yaw = this._spin ? this._spin.x : 0;
+      pose.face.lookYaw = this._lookYawTarget != null ? this._lookYaw.x : 0;
 
       /* ---- Desplazamiento de rebote ---- */
       if (this._bounceAt >= 0) {
@@ -1346,13 +1495,13 @@
       }
 
       /* ---- anillo ocular / boca actual: interpolación deformada punto a punto,
-         cuando se detiene reutiliza la referencia del objetivo ---- */
+         cuando se detiene reutiliza la referencia del objetivo.
+         P6: escribe en buffers preasignados (lerpRingInto) — cero asignaciones por frame. */
       if (this._ringSpring.x < 0.999 || this._ringSpring.v > 0.001 || this._ringSpring.v < -0.001) {
         var rs = clamp(this._ringSpring.x, 0, 1.35);
-        this._ringCur = [
-          lerpRing(this._ringSrc[0], this._ringDst[0], rs),
-          lerpRing(this._ringSrc[1], this._ringDst[1], rs)
-        ];
+        lerpRingInto(this._ringBuf[0], this._ringSrc[0], this._ringDst[0], rs);
+        lerpRingInto(this._ringBuf[1], this._ringSrc[1], this._ringDst[1], rs);
+        this._ringCur = this._ringBuf;
       } else if (this._ringCur !== this._ringDst) {
         this._ringCur = this._ringDst;
       }
@@ -1361,7 +1510,7 @@
 
       if (this._mouthSpring.x < 0.999 || Math.abs(this._mouthSpring.v) > 0.001) {
         var ms = clamp(this._mouthSpring.x, 0, 1.25);
-        this._mouthCur = lerpRing(this._mouthSrc, this._mouthDst, ms);
+        this._mouthCur = lerpRingInto(this._mouthBuf, this._mouthSrc, this._mouthDst, ms);
       } else if (this._mouthCur !== this._mouthDst) {
         this._mouthCur = this._mouthDst;
       }
@@ -1436,6 +1585,15 @@
 
       /* apertura = valor base de configuración × resorte de parpadeo */
       var openS = clamp(this._open.x, 0.02, 1.5);
+      /* v2.3 (D15): apertura externa del tracker pasa por su propio resorte
+       * (ω=14) y se MEZCLA MULTIPLICATIVAMENTE — el parpadeo autónomo sigue
+       * visible sobre la apertura rastreada; null → control interno puro. */
+      if (this._eyeOpenExt != null) {
+        this._eyeOpenExtSpring = this._eyeOpenExtSpring || spring(1);
+        this._eyeOpenExtSpring.t = this._eyeOpenExt;
+        for (var eo = 0; eo < steps; eo++) springStep(this._eyeOpenExtSpring, 14, 1, j);
+        openS = clamp(openS * clamp(this._eyeOpenExtSpring.x, 0, 1), 0.02, 1.5);
+      }
       pose.left.open = clamp(pose.left.open, 0, 1.3) * openS;
       pose.right.open = clamp(pose.right.open, 0, 1.3) * openS;
 
@@ -1516,28 +1674,57 @@
         return clonePose(last.pose);
       }
 
-      if (t <= frames[0].at) return clonePose(frames[0].pose);
-      for (var i = 0; i < frames.length - 1; i++) {
-        var a = frames[i], b = frames[i + 1];
-        if (t >= a.at && t < b.at) {
-          var k = easeInOutCubic((t - a.at) / (b.at - a.at));
-          return lerpPose(a.pose, b.pose, k);
-        }
+      /* P8: muestreo binario O(log n) con ventana deslizante (seq.lo). El resultado
+       * puede ser una pose congelada de la secuencia (inmutable); _compose es el único
+       * punto de mutación y clona antes de aplicar animadores. */
+      var p = sampleFrames(frames, t, seq.lo);
+      /* avanzar la pista solo si no retrocede (t crece monótonamente; el reinicio de
+       * emoción regenera _seq con lo = 0) */
+      if (p && p !== frames[0].pose) {
+        while (seq.lo < frames.length - 2 && frames[seq.lo + 1].at <= t) seq.lo++;
       }
-      return clonePose(last.pose);
+      return p;
     }
   };
 
   /* ---------------- interfaz externa ---------------- */
 
+  /* La API pública vive en el mismo objeto de namespace que geometry/render/fx.
+   * Reasignar `MM` a una función aquí descartaba config, characters y createBall,
+   * y además dejaba window.MoodMates apuntando al objeto antiguo. */
   MM.create = function (target, opts) { return new Engine(target, opts); };
+  MM.Engine = Engine;
   MM.version = '1.0.0';
 
-  /* Cargar configuración semilla (emotions.js se carga antes que este script) */
-  if (Array.isArray(window.EMOTION_SEED)) {
-    window.EMOTION_SEED.forEach(function (raw) {
+  /* Cargar configuración semilla (emotions.js se carga antes que este script).
+   * R2: compatible con ambos formatos — array plano de emociones (histórico) u
+   * objeto { presets, emotions } (salida canónica de tools/seed-to-json.js).
+   * Antes, un seed en formato objeto quedaba fuera del `Array.isArray` y el motor
+   * arrancaba sin catálogo → "emoción desconocida" y caída en _compose. */
+  (function loadSeed() {
+    var seed = window.EMOTION_SEED;
+    if (!seed) return;
+    var arr, presets = null;
+    if (Array.isArray(seed)) arr = seed;
+    else if (Array.isArray(seed.emotions)) { arr = seed.emotions; presets = seed.presets || null; }
+    else return;
+    if (presets) {
+      Object.keys(presets).forEach(function (pn) { MM.config.registerPreset(pn, presets[pn]); });
+    }
+    arr.forEach(function (raw) {
       var r = register(raw);
       if (!r.ok) console.warn('[MoodMates] configuración semilla inválida：', r.id, r.errors);
+    });
+  })();
+
+  /* Extensión emoji U+1F600–U+1F637: seed opcional que exporta src/data/emoji-map.js.
+   * Se carga solo si el archivo está presente en la página (antes que engine.js);
+   * las entradas pasan por la misma validación que el seed base y una entrada
+   * inválida no impide registrar el resto. */
+  if (Array.isArray(window.EMOTION_EMOJI_SEED)) {
+    window.EMOTION_EMOJI_SEED.forEach(function (raw) {
+      var r = register(raw);
+      if (!r.ok) console.warn('[MoodMates] extensión emoji inválida:', r.id, r.errors);
     });
   }
 })();

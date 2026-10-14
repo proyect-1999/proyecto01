@@ -28,6 +28,7 @@ var vm = require('vm');
 
 var ROOT = path.join(__dirname, '..');
 var SEED_FILE = path.join(ROOT, 'src', 'data', 'emotions.js');
+var EMOJI_MAP_FILE = path.join(ROOT, 'src', 'data', 'emoji-map.js');
 var GEOMETRY_FILE = path.join(ROOT, 'src', 'core', 'geometry.js');
 var ENGINE_FILE = path.join(ROOT, 'src', 'core', 'engine.js');
 var OUT_FILE = path.join(ROOT, 'data', 'emotions.json');
@@ -81,30 +82,63 @@ try {
 var sandbox = { window: {} };
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(SEED_FILE, 'utf8'), sandbox, { filename: 'emotions.js' });
+/* Extensión emoji U+1F600–U+1F637: misma fuente que usa engine.js al arrancar. */
+if (fs.existsSync(EMOJI_MAP_FILE)) {
+  vm.runInContext(fs.readFileSync(EMOJI_MAP_FILE, 'utf8'), sandbox, { filename: 'emoji-map.js' });
+}
 
 var seed = sandbox.window.EMOTION_SEED;
 if (!Array.isArray(seed)) {
   console.error('✗ src/data/emotions.js no define window.EMOTION_SEED como array');
   process.exit(1);
 }
+var EMOJI_SEED = sandbox.window.EMOTION_EMOJI_SEED;
+if (EMOJI_SEED != null && !Array.isArray(EMOJI_SEED)) {
+  console.error('✗ src/data/emoji-map.js define window.EMOTION_EMOJI_SEED pero no es un array');
+  process.exit(1);
+}
+/* El catálogo materializado = seed base + extensión emoji (si existe). */
+var catalog = seed.concat(EMOJI_SEED || []);
 
 /* ---------------- Validación ligera (la fuerte la hace el motor al importar) ---------------- */
 
 var errors = [];
 var seen = {};
 var ID_RE = /^(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|[5-9][0-9])$/;
+var EMOJI_ID_RE = /^e1f6(0[0-9a-f]|[1-2][0-9a-f]|3[0-7])$/;   /* U+1F600–U+1F637 */
 var GROUPS = ['life', 'emotion', 'agent', 'custom'];
 /* MOUTHS viene de geometry.js (línea viva, A5) — no duplicar aquí. */
 var ANIM_TYPES = ['sine', 'pulse', 'jitter', 'scan', 'glance', 'blink'];
+/* Perfiles de parpadeo: leídos de engine.js (BLINK_PROFILES) — misma política A5. */
+var bpMatch = engineSrc.match(/var BLINK_PROFILES = \{([\s\S]*?)\n  \};/);
+var BLINK_NAMES = [];
+if (bpMatch) {
+  var bodyLines = bpMatch[1].split('\n');
+  for (var bi = 0; bi < bodyLines.length; bi++) {
+    var bm = bodyLines[bi].match(/^\s*([A-Za-z_]\w*)\s*:/);
+    if (bm) BLINK_NAMES.push(bm[1]);
+  }
+} else {
+  console.error('✗ No se encontró la tabla `var BLINK_PROFILES = {…};` en src/core/engine.js');
+  process.exit(1);
+}
 
-seed.forEach(function (raw, i) {
+catalog.forEach(function (raw, i) {
   var tag = '[' + (raw && raw.id ? raw.id : '#' + i) + ']';
   if (!raw || typeof raw !== 'object') { errors.push(tag + ' entrada no-objeto'); return; }
-  if (typeof raw.id !== 'string' || !ID_RE.test(raw.id)) errors.push(tag + ' id fuera del patrón NN');
+  if (typeof raw.id !== 'string' || !(ID_RE.test(raw.id) || EMOJI_ID_RE.test(raw.id))) {
+    errors.push(tag + ' id fuera del patrón NN o e1f6xx');
+  }
   if (seen[raw.id]) errors.push(tag + ' id duplicado');
   seen[raw.id] = true;
   if (GROUPS.indexOf(raw.group) < 0) errors.push(tag + ' group inválido: ' + raw.group);
   if (raw.mouth != null && MOUTHS.indexOf(raw.mouth) < 0) errors.push(tag + ' mouth desconocido: ' + raw.mouth);
+  if (raw.cp != null && (typeof raw.cp !== 'number' || !isFinite(raw.cp) || raw.cp < 0)) {
+    errors.push(tag + ' cp debe ser un codepoint numérico: ' + raw.cp);
+  }
+  if (raw.blinkProfile != null && BLINK_NAMES.indexOf(raw.blinkProfile) < 0) {
+    errors.push(tag + ' blinkProfile desconocido: ' + raw.blinkProfile);
+  }
   if (raw.anims != null) {
     if (!Array.isArray(raw.anims)) errors.push(tag + ' anims no es array');
     else raw.anims.forEach(function (a, j) {
@@ -176,7 +210,7 @@ var out = {
   version: new Date().toISOString().slice(0, 10),
   generatedBy: 'tools/seed-to-json.js',
   presets: PRESETS,
-  emotions: seed
+  emotions: catalog
 };
 
 var json = JSON.stringify(out, null, 2) + '\n';
@@ -185,7 +219,7 @@ if (CHECK_ONLY) {
   /* A4/A5: el catálogo publicado debe estar al día respecto al seed y al schema. */
   if (fs.existsSync(OUT_FILE)) {
     var current = JSON.parse(fs.readFileSync(OUT_FILE, 'utf8'));
-    if (JSON.stringify(current.emotions) !== JSON.stringify(seed)) {
+    if (JSON.stringify(current.emotions) !== JSON.stringify(catalog)) {
       console.error('✗ data/emotions.json está desfasado respecto a src/data/emotions.js. Ejecuta: node tools/seed-to-json.js');
       process.exit(1);
     }
@@ -198,7 +232,8 @@ if (CHECK_ONLY) {
     process.exit(1);
   }
   syncSchema(true);
-  console.log('✓ seed válido: ' + seed.length + ' emociones, ids únicos, grupos y slots correctos · ' +
+  console.log('✓ catálogo válido: ' + catalog.length + ' emociones (' + seed.length + ' base + ' +
+              (EMOJI_SEED ? EMOJI_SEED.length : 0) + ' emoji), ids únicos, grupos y slots correctos · ' +
               'data/emotions.json y emotions.schema.json al día (' + MOUTHS.length + ' huecos de boca) (--check, no se escribió nada)');
   process.exit(0);
 }
@@ -206,4 +241,4 @@ if (CHECK_ONLY) {
 fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
 fs.writeFileSync(OUT_FILE, json);
 syncSchema(false);
-console.log('✓ data/emotions.json generado: ' + seed.length + ' emociones (' + (json.length / 1024).toFixed(1) + ' KB) · enum mouth del schema sincronizado (' + MOUTHS.length + ' huecos)');
+console.log('✓ data/emotions.json generado: ' + catalog.length + ' emociones (' + seed.length + ' base + ' + (EMOJI_SEED ? EMOJI_SEED.length : 0) + ' emoji; ' + (json.length / 1024).toFixed(1) + ' KB) · enum mouth del schema sincronizado (' + MOUTHS.length + ' huecos)');

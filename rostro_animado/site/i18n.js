@@ -38,6 +38,16 @@ window.MM_I18N = (function () {
       industry_general: 'General',
 
       drawerTitle: 'Ajustes',
+
+      callTitle: '📞 Videollamada con el bot',
+      callCamLabel: 'Cámara',
+      callMicLabel: 'Micrófono',
+      callSpkLabel: 'Bocina / salida (setSinkId)',
+      callBtnStart: '📞 Iniciar llamada',
+      callBtnMute: '🎤 Silenciar',
+      callBtnCam: '📷 Cámara OFF',
+      callBtnEnd: '☎️ Colgar',
+      callHint: 'Señalización loopback local (sin servidor). Para un backend real, usa call.html con modo WebSocket.',
       drawerClose: 'Cerrar ajustes',
       secAppearance: 'Apariencia',
       lblCharacter: 'Personaje actual',
@@ -100,6 +110,16 @@ window.MM_I18N = (function () {
       industry_general: 'General',
 
       drawerTitle: 'Settings',
+
+      callTitle: '📞 Video call with the bot',
+      callCamLabel: 'Camera',
+      callMicLabel: 'Microphone',
+      callSpkLabel: 'Speaker / output (setSinkId)',
+      callBtnStart: '📞 Start call',
+      callBtnMute: '🎤 Mute',
+      callBtnCam: '📷 Camera OFF',
+      callBtnEnd: '☎️ Hang up',
+      callHint: 'Local loopback signaling (no server). For a real backend, use call.html in WebSocket mode.',
       drawerClose: 'Close settings',
       secAppearance: 'Appearance',
       lblCharacter: 'Character',

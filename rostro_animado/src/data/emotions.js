@@ -1,8 +1,11 @@
-
-{
-  "$schema": "./emotions.schema.json",
-  "version": "2026-10-05",
-  "generatedBy": "tools/seed-to-json.js",
+/* emotions.js — Semilla de datos puros (formato JS: window.EMOTION_SEED)
+ * Fuente canónica del catálogo; data/emotions.json se regenera con:
+ *   node tools/seed-to-json.js
+ * index.html la carga ANTES que engine.js (fallback embebido del sitio).
+ */
+(function (w) {
+  'use strict';
+  w.EMOTION_SEED = {
   "presets": {
     "steady": {
       "poolMs": [
@@ -1891,4 +1894,5 @@
       }
     }
   ]
-}
+};
+})(typeof window !== 'undefined' ? window : globalThis);

@@ -1,3 +1,4 @@
+
 /* ============================================================
    Mood Mates · estilos del sitio
    Tema: doble tema con variables CSS (oscuro por defecto / claro), cambio vía html[data-theme]
@@ -12,7 +13,7 @@
   --font-sans: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Microsoft YaHei", "PingFang SC", sans-serif;
   --font-disp: "Space Grotesk", "Noto Sans SC", -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Space Grotesk", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --font-mono: "Space Grotesk", ui-monospace, monospace;
   /* Navegación suspensa: 24px del borde superior + altura de nave ~58px + 24px de margen */
   --nav-offset: 106px;
   /* Contenedor de contenido: 1280px de ancho + 32px de padding = 1216px de contenido, alineado con el contenido de navegación */
@@ -1189,3 +1190,118 @@ svg.is-sketch .mm-spark {
   .hero-backdrop::after { animation: none; opacity: 0.8; }
   * { transition-duration: 0.01ms !important; }
 }
+
+/* ═══════════ Overlay de videollamada con bot (site/call.js + index.html) ═══════════ */
+.call-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 95;
+  width: min(860px, 94vw);
+  max-height: 88vh;
+  padding: 20px 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  overflow-y: auto;
+  transform: translate(-50%, -48%) scale(0.97);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.32, 0.9, 0.35, 1), opacity 0.25s;
+  box-shadow: 0 24px 60px var(--shadow);
+}
+.call-overlay.open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.call-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.call-head h2 { font-size: 16px; font-weight: 700; }
+.call-status {
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border: 1px dashed var(--line-strong, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  font-size: 13px;
+  min-height: 40px;
+  white-space: pre-wrap;
+}
+.call-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) { .call-grid { grid-template-columns: 1fr; } }
+.call-col label { margin-top: 10px; }
+.call-bot-box {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg) 70%, #000 10%);
+}
+.call-meta { font-size: 12px; color: var(--muted); margin: 8px 0 2px; }
+.call-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--line);
+  color: var(--muted);
+}
+.call-badge.connecting { background: #8a6d1c; color: #ffe9a8; }
+.call-badge.connected { background: #1d4d33; color: #8ce6b0; }
+.call-badge.failed, .call-badge.disconnected { background: #4d1d1d; color: #ff9c9c; }
+#callLocalVideo {
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 10px;
+  background: #000;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+#callRemoteAudio { width: 100%; margin-top: 8px; }
+.call-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.call-hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+/* ═══════ v2.3 · Seguimiento facial ═══════ */
+.track-badge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 5;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: .04em;
+  background: rgba(0, 0, 0, .45);
+  color: #cfe8ff;
+  border: 1px solid rgba(120, 180, 255, .35);
+  pointer-events: none;
+}
+.track-badge.st-active   { color: #8ce6b0; border-color: rgba(90, 210, 140, .5); }
+.track-badge.st-acquiring{ color: #ffe9a8; border-color: rgba(230, 200, 90, .5); }
+.track-badge.st-lost     { color: #ffd0a0; border-color: rgba(240, 170, 90, .5); }
+.track-badge.st-error    { color: #ff9c9c; border-color: rgba(240, 110, 110, .55); }
+.track-preview {
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 10px;
+  background: #000;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+#faceTrackToggle.active { background: #1d4d33; color: #8ce6b0; border-color: #2e7a50; }

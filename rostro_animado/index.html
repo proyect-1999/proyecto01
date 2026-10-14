@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="site/style.css?v=21d">
+  <link rel="stylesheet" href="site/style.css?v=21e">
 </head>
 <body class="mode-wall">
 
@@ -20,6 +20,9 @@
       <span class="brand-name" data-i18n="brandName">Mood Mates</span>
     </div>
     <div class="top-actions">
+      <button type="button" id="callToggle" class="icon-btn call-btn" aria-label="Videollamada con el bot" title="Videollamada con el bot">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </button>
       <button type="button" id="langToggle" class="icon-btn lang-btn">EN</button>
       <button type="button" id="themeToggle" class="icon-btn" aria-label="Theme">
         <svg class="ico-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
@@ -167,19 +170,73 @@
     </section>
   </aside>
 
+  <!-- ═══════ Modal de videollamada con bot animado (call-overlay) ═══════
+       Reutiliza la capa multimedia src/media/* sobre el motor ya cargado en esta página.
+       La versión standalone completa sigue disponible en call.html -->
+  <div id="callMask" class="drawer-mask" hidden></div>
+  <aside id="callOverlay" class="call-overlay" aria-hidden="true">
+    <div class="call-head">
+      <h2 data-i18n="callTitle">📞 Videollamada con el bot</h2>
+      <button type="button" id="callClose" class="icon-btn" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div id="callStatus" class="call-status">Pulsa «Iniciar llamada» para conectar cámara y micrófono.</div>
+
+    <div class="call-grid">
+      <div class="call-col">
+        <div id="callBotBox" class="call-bot-box"></div>
+        <p class="call-meta">Emoción: <span id="callBotEmo">--</span> · WebRTC: <span id="callRtcState" class="call-badge idle">idle</span></p>
+        <label for="callCharSelect" data-i18n="lblCharacter">Personaje</label>
+        <select id="callCharSelect" class="select">
+          <option value="nimbo" selected>Nimbo</option>
+          <option value="twinkle">Twinkle</option>
+        </select>
+      </div>
+
+      <div class="call-col">
+        <label for="callCameraSelect" data-i18n="callCamLabel">Cámara</label>
+        <select id="callCameraSelect" class="select"><option value="">Predeterminado</option></select>
+        <video id="callLocalVideo" autoplay playsinline muted></video>
+
+        <label for="callMicSelect" data-i18n="callMicLabel">Micrófono</label>
+        <select id="callMicSelect" class="select"><option value="">Predeterminado</option></select>
+
+        <label for="callSpeakerSelect" data-i18n="callSpkLabel">Bocina / salida (setSinkId)</label>
+        <select id="callSpeakerSelect" class="select"><option value="">Predeterminado</option></select>
+        <audio id="callRemoteAudio" autoplay controls></audio>
+      </div>
+    </div>
+
+    <div class="call-controls">
+      <button type="button" id="callStartBtn" class="btn primary" data-i18n="callBtnStart">📞 Iniciar llamada</button>
+      <button type="button" id="callMuteBtn" class="btn" disabled data-i18n="callBtnMute">🎤 Silenciar</button>
+      <button type="button" id="callCamBtn" class="btn" disabled data-i18n="callBtnCam">📷 Cámara OFF</button>
+      <button type="button" id="callEndBtn" class="btn ghost" disabled data-i18n="callBtnEnd">☎️ Colgar</button>
+    </div>
+    <p class="call-hint" data-i18n="callHint">Señalización loopback local (sin servidor). Para un backend real, usa call.html con modo WebSocket.</p>
+  </aside>
+
   <!-- Indicador de estado flotante -->
   <div id="toast" class="toast" role="status"></div>
 
   <!-- Orden de carga: biblioteca de geometría → capa de renderizar → capa de rasgos → capa de efectos → datos de emociones → motor → paquete de personajes → textos → capa de interacción -->
   <script src="src/core/geometry.js"></script>
-  <script src="src/core/render.js?v=21e"></script>
+  <script src="src/core/render.js?v=22d"></script>
   <script src="src/core/features.js"></script>
   <script src="src/core/fx.js?v=21a"></script>
-  <script src="src/data/emotions.js?v=18a"></script>
-  <script src="src/core/engine.js?v=21e"></script>
+  <script src="src/data/emotions.js?v=22a"></script>
+  <script src="src/core/engine.js?v=22d"></script>
   <script src="src/characters/nimbo.js?v=21a"></script>
   <script src="src/characters/twinkle.js"></script>
+  <!-- Capa multimedia: dispositivos + WebRTC + sesión de llamada -->
+  <script src="src/media/MediaDeviceManager.js"></script>
+  <script src="src/media/WebRTCClient.js"></script>
+  <script src="src/media/CallSession.js"></script>
   <script src="site/i18n.js"></script>
   <script src="site/app.js"></script>
+  <!-- Glue que integra la videollamada (call.html) dentro del index -->
+  <script src="site/call.js?v=1a"></script>
 </body>
 </html>

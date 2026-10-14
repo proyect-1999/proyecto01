@@ -1,0 +1,331 @@
+--- rostro_animado/call.html (原始)
+
+
++++ rostro_animado/call.html (修改后)
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mood Mates · Videollamada con bot animado (demo)</title>
+  <style>
+    :root { --bg:#0e1116; --card:#161b23; --line:#2a313c; --text:#e8ecf1; --muted:#9aa7b5;
+            --accent:#5cc8ff; --ok:#4cc38a; --danger:#e25b5b; }
+    * { box-sizing: border-box; }
+    body { font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text);
+           max-width:1000px; margin:24px auto; padding:16px; }
+    h1 { font-size:22px; } h2 { font-size:16px; margin:0 0 10px; }
+    .layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:760px){ .layout{grid-template-columns:1fr;} }
+    section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+    label { display:block; margin:10px 0 4px; font-size:13px; color:var(--muted); font-weight:600; }
+    select, button { width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--line);
+                     background:#1d242e; color:var(--text); font-size:14px; }
+    button { cursor:pointer; margin-top:10px; }
+    button:hover { border-color:var(--accent); }
+    button.primary { background:var(--accent); color:#06202e; font-weight:700; border-color:var(--accent); }
+    button.danger  { background:var(--danger); color:#fff; border-color:var(--danger); font-weight:700; }
+    button.warn    { background:#8a6d1c; color:#fff; border-color:#8a6d1c; }
+    video { width:100%; background:#000; border-radius:10px; margin-top:10px; aspect-ratio:4/3; object-fit:cover; }
+    #botBox { height:260px; display:flex; align-items:center; justify-content:center;
+              background:#0b0e12; border-radius:10px; }
+    #status { padding:12px; border-radius:8px; background:#10151c; border:1px dashed var(--line);
+              font-size:13px; min-height:40px; white-space:pre-wrap; }
+    .btnrow { display:flex; gap:8px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:12px; font-weight:700; }
+    .badge.idle{background:#2a313c;color:var(--muted);} .badge.connecting{background:#8a6d1c;color:#ffe9a8;}
+    .badge.connected{background:#1d4d33;color:#8ce6b0;} .badge.failed,.badge.disconnected{background:#4d1d1d;color:#ff9c9c;}
+    small { color:var(--muted); }
+    ul { margin:6px 0; padding-left:18px; color:var(--muted); font-size:13px; }
+  </style>
+</head>
+<body>
+
+<h1>📞 Mood Mates · Videollamada con bot animado</h1>
+<p><small>Demo de la capa multimedia: selección de cámara/micrófono/bocina, mute, cambio en caliente,
+detección hot-plug y conexión WebRTC. El bot reacciona a cada evento con su emoción.</small></p>
+
+<div id="status">Inicializando…</div>
+
+<div class="layout">
+
+  <!-- ═══════ Columna izquierda: el bot (el "compañero de llamada") ═══════ -->
+  <div>
+    <section>
+      <h2>🤖 Bot animado (estado de la llamada)</h2>
+      <div id="botBox"></div>
+      <label>Personaje del bot</label>
+      <select id="botChar">
+        <option value="nimbo" selected>Nimbo</option>
+        <option value="twinkle">Twinkle</option>
+      </select>
+      <p style="font-size:13px;color:var(--muted)">Emoción actual: <span id="botEmo">--</span></p>
+    </section>
+
+    <section>
+      <h2>🎛️ Controles de llamada</h2>
+      <button id="startBtn" class="primary">📞 Iniciar llamada</button>
+      <div class="btnrow">
+        <button id="muteBtn" disabled>🎤 Silenciar</button>
+        <button id="camBtn" disabled>📷 Cámara ON/OFF</button>
+      </div>
+      <button id="endBtn" class="danger" disabled>☎️ Colgar</button>
+      <p style="margin-top:10px">Estado WebRTC: <span id="rtcState" class="badge idle">idle</span></p>
+      <label>Modo de señalización</label>
+      <select id="signalMode">
+        <option value="loopback" selected>Loopback local (sin servidor)</option>
+        <option value="ws">WebSocket real (url abajo)</option>
+      </select>
+      <input id="signalUrl" placeholder="wss://mi-servidor/signal" style="margin-top:8px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:#1d242e;color:var(--text)">
+    </section>
+  </div>
+
+  <!-- ═══════ Columna derecha: dispositivos ═══════ -->
+  <div>
+    <section>
+      <h2>📷 Cámara</h2>
+      <label for="cameraSelect">Dispositivo de vídeo</label>
+      <select id="cameraSelect"><option value="">Predeterminado</option></select>
+      <video id="localVideo" autoplay playsinline muted></video>
+    </section>
+
+    <section>
+      <h2>🎤 Micrófono</h2>
+      <label for="microphoneSelect">Dispositivo de entrada</label>
+      <select id="microphoneSelect"><option value="">Predeterminado</option></select>
+    </section>
+
+    <section>
+      <h2>🔊 Bocina / salida</h2>
+      <label for="speakerSelect">Dispositivo de salida <small>(setSinkId, no getUserMedia)</small></label>
+      <select id="speakerSelect"><option value="">Predeterminado</option></select>
+      <audio id="remoteAudio" controls autoplay></audio>
+      <video id="remoteVideo" autoplay playsinline controls></video>
+      <ul>
+        <li>La bocina se cambia con <code>element.setSinkId(deviceId)</code>.</li>
+        <li>Cámara/micrófono se eligen con <code>getUserMedia({deviceId:{exact:id}})</code>.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<!-- Motor Mood Mates (orden fijo documentado en docs/INTEGRATION.md) -->
+<script src="src/core/geometry.js"></script>
+<script src="src/core/render.js?v=22d"></script>
+<script src="src/core/features.js"></script>
+<script src="src/core/fx.js"></script>
+<script src="src/data/emotions.js"></script>
+<script src="src/core/engine.js"></script>
+<script src="src/characters/nimbo.js"></script>
+<script src="src/characters/twinkle.js"></script>
+
+<!-- Capa multimedia nueva -->
+<script src="src/media/MediaDeviceManager.js"></script>
+<script src="src/media/WebRTCClient.js"></script>
+<script src="src/media/CallSession.js"></script>
+<!-- v2.3 · Tracking facial (mismo orden que index.html) -->
+<script src="src/media/EmotionPolicy.js"></script>
+<script src="src/tracking/Filters.js"></script>
+<script src="src/tracking/MpLoader.js"></script>
+<script src="src/tracking/Backends.js"></script>
+<script src="src/tracking/TrackingBridge.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var statusEl = $('status');
+  function setStatus(msg) { statusEl.textContent = msg; }
+
+  /* ---------------- Bot animado (motor MoodMates) ---------------- */
+  var mate = null;
+  function buildBot(charId) {
+    if (mate) { try { mate.destroy(); } catch (e) {} }
+    var MM = window.MoodMates;  /* motor de animación expuesto por engine.js */
+    mate = MM ($('botBox'), { character: charId || 'nimbo', emotion: '02', idle: true });
+    mate.on('change', function (e) { $('botEmo').textContent = e.id + ' · ' + (e.def && e.def.name ? e.def.name.es || e.def.id : ''); });
+  }
+  buildBot('nimbo');
+  $('botChar').addEventListener('change', function () { buildBot(this.value); });
+
+  /* ---------------- Rellenado de selects de dispositivos ---------------- */
+  function fillSelect(sel, devices, defaultName) {
+    var prev = sel.value;
+    sel.innerHTML = '';
+    var opt0 = document.createElement('option');
+    opt0.value = ''; opt0.textContent = 'Predeterminado';
+    sel.appendChild(opt0);
+    devices.forEach(function (d, i) {
+      var o = document.createElement('option');
+      o.value = d.deviceId;
+      o.textContent = d.label || (defaultName + ' ' + (i + 1));
+      sel.appendChild(o);
+    });
+    if (prev && sel.querySelector('option[value="' + CSS.escape(prev) + '"]')) sel.value = prev;
+  }
+
+  /* ---------------- Señalización loopback (demo sin servidor) -------
+   * Simula un peer remoto conectando dos RTCPeerConnection locales por
+   * un canal de mensajes compartido — útil para probar toda la tubería
+   * getUserMedia → tracks → offer/answer/ICE → ontrack sin backend.   */
+  function makeLoopbackSignal() {
+    var A = { handlers: {}, peers: [] };
+    function mkSide(name) {
+      return {
+        on: function (evt, fn) { (this._h[evt] = this._h[evt] || []).push(fn); return this; },
+        _h: {},
+        open: function () { var self = this; return Promise.resolve().then(function () { self._fire('open'); }); },
+        send: function (obj) {
+          /* entrega diferida al otro lado, como una red real */
+          var other = this.other;
+          setTimeout(function () { if (other) other._fire('message', obj); }, 30);
+          return true;
+        },
+        close: function () {},
+        _fire: function (evt, p) { (this._h[evt] || []).forEach(function (f) { f(p); }); }
+      };
+    }
+    var s1 = mkSide('client'), s2 = mkSide('server');
+    s1.other = s2; s2.other = s1;
+    /* "servidor" responde a join con una offer simulada? No: aquí nuestro
+       WebRTCClient siempre ofrece; el lado pasivo responde con answer. */
+    s2.on('message', async function (msg) {
+      if (!s2.pc) {
+        s2.pc = new RTCPeerConnection({ iceServers: [] });
+        s2.pc.onicecandidate = function (ev) { if (ev.candidate) s2.send({ type: 'ice', candidate: ev.candidate }); };
+        s2.pc.ontrack = function (ev) { s2.remoteStream = ev.streams[0]; };
+      }
+      if (msg.type === 'offer') {
+        await s2.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        var ans = await s2.pc.createAnswer();
+        await s2.pc.setLocalDescription(ans);
+        s2.send({ type: 'answer', sdp: s2.pc.localDescription });
+      } else if (msg.type === 'ice' && s2.pc) {
+        try { await s2.pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch (e) {}
+      }
+    });
+    return s1; /* el lado que usa WebRTCClient */
+  }
+
+  /* ---------------- Sesión de llamada ---------------- */
+  var session = MM_Call.create({
+    mate: mate,
+    videoElement: $('localVideo'),
+    remoteVideoElement: $('remoteVideo'),
+    audioElements: [$('remoteAudio'), $('remoteVideo')],
+    roomId: 'bot-call-demo',
+    signal: makeLoopbackSignal(),     /* modo loopback por defecto */
+    onMediaEvent: function (evt, data) {
+      console.log('[media]', evt, data);
+    },
+    onCallEvent: function (evt, data) {
+      console.log('[call]', evt, data);
+      var badge = $('rtcState');
+      if (evt === 'state') {
+        badge.textContent = data.state;
+        badge.className = 'badge ' + data.state;
+      }
+    },
+    onDevicesChanged: function (devices) {
+      refreshDeviceLists(devices);
+      setStatus('Dispositivos detectados (hot-plug): ' +
+        devices.videoinputs.length + ' cámaras · ' +
+        devices.audioinputs.length + ' micrófonos · ' +
+        devices.audiooutputs.length + ' salidas');
+    }
+  });
+
+  function refreshDeviceLists(devices) {
+    fillSelect($('cameraSelect'), devices.videoinputs, 'Cámara');
+    fillSelect($('microphoneSelect'), devices.audioinputs, 'Micrófono');
+    fillSelect($('speakerSelect'), devices.audiooutputs, 'Bocina');
+  }
+
+  /* Arranque: permisos → enumerate (los labels solo existen tras el permiso). */
+  session.setup().then(function (devices) {
+    refreshDeviceLists(devices);
+    setStatus('Sistema multimedia listo.\n' +
+      devices.videoinputs.length + ' cámaras · ' +
+      devices.audioinputs.length + ' micrófonos · ' +
+      devices.audiooutputs.length + ' salidas de audio.\n' +
+      'Conecta tus dispositivos y pulsa "Iniciar llamada".');
+  }).catch(function (e) {
+    setStatus('Error: ' + e.message);
+  });
+
+  /* ---------------- Eventos de UI ---------------- */
+  $('cameraSelect').addEventListener('change', async function () {
+    session.media.camera.deviceId = this.value;
+    if (session.media.camera.isRunning()) {
+      if (session.rtc && session.rtc.pc) await session.switchCamera(this.value);
+      else await session.media.startCamera(this.value);
+      setStatus('Cámara cambiada en caliente (applyConstraints + replaceTrack).');
+    }
+  });
+
+  $('microphoneSelect').addEventListener('change', async function () {
+    session.media.microphone.deviceId = this.value;
+    if (session.media.microphone.isRunning()) {
+      if (session.rtc && session.rtc.pc) await session.switchMicrophone(this.value);
+      else await session.media.startMicrophone(this.value);
+      setStatus('Micrófono cambiado en caliente.');
+    }
+  });
+
+  $('speakerSelect').addEventListener('change', async function () {
+    if (!this.value) return;
+    try {
+      await session.selectSpeaker(this.value);
+      setStatus('Salida de audio cambiada con setSinkId().');
+    } catch (e) {
+      setStatus('Error de salida de audio: ' + e.message);
+    }
+  });
+
+  $('startBtn').addEventListener('click', async function () {
+    this.disabled = true;
+    /* Elegir modo de señalización ANTES de crear el WebRTCClient:
+       loopback = par de canales simulados sin servidor; ws = señalización real. */
+    if ($('signalMode').value === 'ws' && $('signalUrl').value) {
+      session.options.signal = null;
+      session.options.signalUrl = $('signalUrl').value;
+    } else {
+      session.options.signalUrl = null;
+      session.options.signal = makeLoopbackSignal();
+    }
+    try {
+      await session.startCall();
+      $('muteBtn').disabled = false;
+      $('camBtn').disabled = false;
+      $('endBtn').disabled = false;
+      setStatus('Llamada iniciada: cámara + micrófono → WebRTC. El bot está "pensando" hasta conectar.');
+    } catch (e) {
+      setStatus('No se pudo iniciar la llamada: ' + e.message);
+      this.disabled = false;
+    }
+  });
+
+  $('muteBtn').addEventListener('click', function () {
+    var muted = session.toggleMute();
+    this.textContent = muted ? '🔇 Reactivar micrófono' : '🎤 Silenciar';
+    this.className = muted ? 'warn' : '';
+    setStatus(muted ? 'Micrófono silenciado (track.enabled=false).' : 'Micrófono activo.');
+  });
+
+  $('camBtn').addEventListener('click', function () {
+    var on = session.toggleCamera();
+    setStatus(on ? 'Cámara encendida.' : 'Cámara apagada.');
+  });
+
+  $('endBtn').addEventListener('click', function () {
+    session.endCall();
+    $('startBtn').disabled = false;
+    $('muteBtn').disabled = $('camBtn').disabled = $('endBtn').disabled = true;
+    $('muteBtn').textContent = '🎤 Silenciar'; $('muteBtn').className = '';
+    setStatus('Llamada finalizada. Dispositivos locales liberados.');
+  });
+})();
+</script>
+</body>
+</html>
