@@ -32,8 +32,53 @@ function post(type, payload) {
   self.postMessage(Object.assign({ type: type, seq: ++seq }, payload || {}));
 }
 
+/* Codifica texto UTF-8 → base64 en trozos (evita desbordar la pila de
+ * fromCharCode con bundles de varios MB). */
+function b64FromText(text) {
+  var bytes = new TextEncoder().encode(text);
+  var CH = 0x8000, parts = [];
+  for (var i = 0; i < bytes.length; i += CH) {
+    parts.push(String.fromCharCode.apply(null, bytes.subarray(i, i + CH)));
+  }
+  return btoa(parts.join(''));
+}
+
 async function initFaceLandmarker(cfg) {
-  mod = await import(cfg.bundleUrl);
+  /* v2.5.1 — Carga estricta (espejo de MpLoader en el host): fetch con
+   * validación (res.ok, content-type, firma del bundle, anti-HTML) ANTES de
+   * importar. Un error claro tipo "HTTP 404" sustituye al fallo opaco de
+   * import(); y si el host no normalizó las rutas (F2), se resuelven aquí
+   * contra la URL del propio worker como respaldo. */
+  var abs = function (u) { try { return new URL(u, self.location.href).href; } catch (e) { return u; } };
+  var bundleUrl = abs(cfg.bundleUrl || 'assets/vendor/mediapipe/vision_bundle.mjs');
+  cfg.wasmPaths = abs(cfg.wasmPaths || 'assets/vendor/mediapipe/wasm/');
+  if (cfg.modelUrl) cfg.modelUrl = abs(cfg.modelUrl);
+
+  var text;
+  try {
+    var res = await fetch(bundleUrl, { credentials: 'same-origin', cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' al pedir ' + bundleUrl);
+    var ct = String(res.headers.get('content-type') || '').toLowerCase();
+    if (/text\/html/.test(ct)) throw new Error('el servidor devolvió HTML (no JS) para ' + bundleUrl);
+    text = await res.text();
+    if (!text.trim()) throw new Error('respuesta vacía desde ' + bundleUrl);
+    if (/<(!doctype|html)/i.test(text.slice(0, 512))) throw new Error('contenido HTML servido como módulo en ' + bundleUrl);
+    if (text.indexOf('FilesetResolver') < 0) throw new Error('el bundle de ' + bundleUrl + ' no exporta FilesetResolver (versión incorrecta de tasks-vision)');
+  } catch (eFetch) {
+    /* Reintento único con cache-buster (URL distinta ⇒ sin caché ni módulo
+     * envenenado en el grafo); si también falla, se propaga el error claro. */
+    var bust = bundleUrl + (bundleUrl.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now().toString(36);
+    try {
+      var r2 = await fetch(bust, { credentials: 'same-origin', cache: 'no-store' });
+      if (!r2.ok) throw new Error('HTTP ' + r2.status);
+      text = await r2.text();
+      if (!text.trim() || /<(!doctype|html)/i.test(text.slice(0, 512))) throw new Error('contenido inválido');
+    } catch (e2) {
+      throw new Error('track.worker: no se pudo cargar el bundle MediaPipe — ' +
+        (eFetch && eFetch.message || eFetch) + ' | reintento: ' + (e2 && e2.message || e2));
+    }
+  }
+  mod = await import('data:text/javascript;base64,' + b64FromText(text));
   if (!mod.FaceLandmarker || !mod.FilesetResolver) {
     throw new Error('el bundle no exporta FaceLandmarker/FilesetResolver');
   }

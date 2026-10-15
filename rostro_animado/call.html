@@ -124,11 +124,14 @@ detección hot-plug y conexión WebRTC. El bot reacciona a cada evento con su em
 <script src="src/media/WebRTCClient.js"></script>
 <script src="src/media/CallSession.js"></script>
 <!-- v2.3 · Tracking facial (mismo orden que index.html) -->
-<script src="src/media/EmotionPolicy.js"></script>
-<script src="src/tracking/Filters.js"></script>
-<script src="src/tracking/MpLoader.js"></script>
-<script src="src/tracking/Backends.js"></script>
-<script src="src/tracking/TrackingBridge.js"></script>
+<!-- v2.5.1 — F3: cache-busters ?v=253 en todos los módulos de tracking para
+     forzar recarga tras la corrección del worker/bridge (evita servir la
+     versión obsoleta cacheada que cancelaba el tracking). -->
+<script src="src/media/EmotionPolicy.js?v=253"></script>
+<script src="src/tracking/Filters.js?v=253"></script>
+<script src="src/tracking/MpLoader.js?v=253"></script>
+<script src="src/tracking/Backends.js?v=253"></script>
+<script src="src/tracking/TrackingBridge.js?v=253"></script>
 
 <script>
 (function () {

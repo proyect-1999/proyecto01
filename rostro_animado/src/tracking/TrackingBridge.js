@@ -115,6 +115,7 @@
     var listeners = [];
     var rafId = 0;
     var stopped = true;
+    var epoch = 0;               /* invalida start() en vuelo al stop()/restart() */
     var lastSeenAt = 0;
     var lastProbeAt = 0;
     var inflight = false;
@@ -210,27 +211,15 @@
       var earR = F.eyeAspectRatio(lmArr, 'right');
       var gazeL = F.irisGaze(lmArr, 'left');
       var gazeR = F.irisGaze(lmArr, 'right');
-      /* Convención de signo (v2.3.2): el escenario NO aplica scaleX(-1) al
-       * personaje, así que la pantalla coincide con las coordenadas crudas de
-       * la cámara. Con mirror=true (vista espejada del usuario) se voltea x:
-       * cabeza girada a la derecha del usuario → yaw positivo → bot gira a su
-       * derecha en pantalla. yawFromLandmarks(mirror=false) entrega el yaw
-       * crudo de imagen; aquí se aplica el volteo una sola vez. */
-      var pose = F.yawFromLandmarks(lmArr, false);
-      var yawOut = mirror ? -pose.yaw : pose.yaw;
+      var pose = F.yawFromLandmarks(lmArr, mirror);
 
-      /* v2.3.2 FIX — Doble inversión eliminada: irisGaze ya devuelve x en
-       * coordenadas de CABEZA (el ojo derecho se voltea internamente con sx=-1).
-       * Multiplicar otra vez por (mirror?-1:1) invertía la mirada horizontal:
-       * el bot miraba al lado contrario del usuario y el efecto parecía "no
-       * seguir el rostro". mirror solo afecta a yawFromLandmarks. */
       var g = F.sanitizeVec(
-        (gazeL.x + gazeR.x) / 2,
+        ((gazeL.x + gazeR.x) / 2) * (mirror ? -1 : 1),
         (gazeL.y + gazeR.y) / 2
       );
       var openAvg = F.opennessFromEAR((earL + earR) / 2, earClosed, earOpen);
 
-      var f = bank.filter(now / 1000, { gx: g.x, gy: g.y, open: openAvg, yaw: yawOut });
+      var f = bank.filter(now / 1000, { gx: g.x, gy: g.y, open: openAvg, yaw: pose.yaw });
       var s = F.sanitizeVec(f.gx, f.gy);
 
       adapter.setGaze(s.x, s.y, { source: 'tracker', priority: TRACKER_PRIORITY });
@@ -320,35 +309,50 @@
       start: async function () {
         if (state === 'ACQUIRING' || state === 'ACTIVE') return;
         setState('ACQUIRING', 'start');
+        /* v2.5.1 — F1: `stopped` vale true hasta el final de start(), por lo
+         * que cualquier comprobación `|| stopped` durante la secuencia de
+         * arranque cancela SIEMPRE el inicio (el catch disposeaba el backend,
+         * state quedaba IDLE sin evento y loop() nunca ejecutaba: cámara
+         * encendida, avatar sin seguir). Durante start() la única señal de
+         * cancelación válida es un stop()/restart() concurrente, que se
+         * detecta con el epoch propio. */
+        var myEpoch = ++epoch;
         try {
           var cfg = Object.assign({
             bundleUrl: 'assets/vendor/mediapipe/vision_bundle.mjs',
             wasmPaths: 'assets/vendor/mediapipe/wasm/',
             modelPath: 'assets/vendor/mediapipe/face_landmarker.task',
             delegate: opts.delegate || 'GPU',
-            numFaces: 1,
-            /* v2.3.2 — umbrales bajados de 0.5 (default) a 0.3: con iluminación
-             * mediocre/webcams de portátil el detector por debajo de 0.5 no
-             * entregaba caras y el bridge nunca llegaba a ACTIVE ("no sigue el
-             * rostro" sin ningún error en consola). */
-            minFaceDetectionConfidence: opts.minFaceDetectionConfidence != null ? opts.minFaceDetectionConfidence : 0.3,
-            minTrackingConfidence: opts.minTrackingConfidence != null ? opts.minTrackingConfidence : 0.3
+            numFaces: 1
           }, opts.loader || {});
           /* Normalización de claves: MpLoader usa modelPath; el worker usa
            * modelUrl. Sin esto, en el camino Worker el landmarker se creaba sin
            * modelo (modelAssetPath undefined) y la inferencia devolvía 0 caras:
            * "no sigue el rostro" incluso con todo lo demás correcto. */
           cfg.modelUrl = cfg.modelUrl || cfg.modelPath;
+          /* F2: normalización de rutas contra document.baseURI — funciona en
+           * raíz y en subruta (GitHub Pages), y dentro del worker (que no tiene
+           * base propia para relativas). */
+          var abs = T.MpLoader && typeof T.MpLoader.absUrl === 'function'
+            ? T.MpLoader.absUrl : function (u) { try { return new URL(u, document.baseURI).href; } catch (e) { return u; } };
+          cfg.bundleUrl = abs(cfg.bundleUrl);
+          cfg.wasmPaths = abs(cfg.wasmPaths);
+          cfg.modelUrl = abs(cfg.modelUrl);
+          cfg.modelPath = cfg.modelUrl;
           backend = T.Backends
             ? T.Backends.create(opts.backend || 'auto', {
                 workerUrl: opts.workerUrl,
-                onError: function (e) { emit('warning', { message: e.message }); }
+                onError: function (e) { emit('warning', { message: e.message }); },
+                onWarning: function (e) { emit('warning', { message: e.message }); }
               })
             : null;
           if (!backend) throw new Error('cargue primero src/tracking/Backends.js');
           await backend.init(cfg);
+          if (myEpoch !== epoch) throw new Error('__cancelled__');
           await acquireStream();
+          if (myEpoch !== epoch) throw new Error('__cancelled__');
           await video.play();
+          if (myEpoch !== epoch) throw new Error('__cancelled__');
           stopped = false;
           lastSeenAt = performance.now();
           loop();
@@ -361,6 +365,7 @@
       },
 
       stop: function () {
+        epoch++;           /* invalida cualquier start() en vuelo (patch 2e) */
         stopped = true;
         if (rafId) cancelAnimationFrame(rafId);
         rafId = 0;

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Selftest tracking</title></head>
+<body>
+<pre id="out">Ejecutando…</pre>
+<script>
+/* v2.5.3 — el selftest puede abrirse desde CUALQUIER ruta (file://, subcarpetas,
+ * servidor con raíz distinta). Resuelve la raíz real de rostro_animado y carga
+ * MpLoader.js dinámicamente, en lugar de asumir una ruta relativa fija. */
+window.__SELFTEST_ERRORS__ = [];
+window.addEventListener('error', function (e) {
+  window.__SELFTEST_ERRORS__.push(String(e.message || e.filename || 'error'));
+});
+
+function detectRoot() {
+  var p = location.pathname; // .../tools/selftest.html | /selftest.html | /subruta/tools/selftest.html
+  var i = p.lastIndexOf('/tools/selftest.html');
+  if (i >= 0) return p.slice(0, i + 1);
+  var j = p.lastIndexOf('/selftest.html');
+  if (j >= 0) return p.slice(0, j + 1);
+  return p.replace(/[^/]*$/, '');
+}
+var ROOT = detectRoot();
+document.currentScript.dataset.root = ROOT;
+
+function loadScript(url) {
+  return new Promise(function (res, rej) {
+    var s = document.createElement('script');
+    s.src = url;
+    s.onload = function () { res(url); };
+    s.onerror = function () { rej(new Error('No se pudo cargar ' + url +
+      (location.protocol === 'file:' ? ' (los navegadores bloquean módulos bajo file://: sirve la carpeta con un HTTP server)' : ' (404 o JS corrupto/HTML en su lugar)'))); };
+    document.head.appendChild(s);
+  });
+}
+</script>
+<script type="module">
+const out = [];
+const log = (ok, msg) => out.push((ok ? '✔ ' : '✘ ') + msg);
+const ROOT = document.querySelector('script[data-root]').dataset.root;
+log(true, 'Raíz detectada: ' + location.origin + ROOT + ' (' + location.protocol + ')');
+try {
+  await loadScript(ROOT + 'src/tracking/MpLoader.js?v=253');
+  const T = window.MM_Tracking;
+  if (!T || !T.MpLoader) throw new Error('MM_Tracking.MpLoader no está definido tras cargar ' + ROOT + 'src/tracking/MpLoader.js — el archivo existe pero NO ejecutó (revisa la pestaña Red/Console: content-type HTML, sintaxis rota o CSP). Errores capturados: ' + (window.__SELFTEST_ERRORS__.join(' | ') || 'ninguno'));
+  log(typeof T.MpLoader.VENDOR_BASE === 'string', 'VENDOR_BASE = ' + T.MpLoader.VENDOR_BASE);
+  const files = ['vision_bundle.mjs', 'face_landmarker.task', 'wasm/vision_wasm_internal.js', 'wasm/vision_wasm_internal.wasm'];
+  for (const f of files) {
+    const url = T.MpLoader.VENDOR_BASE + f;
+    let ok = false, detail = '';
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      const len = Number(r.headers.get('content-length') || -1);
+      ok = r.ok && (len === -1 || len > 1000);
+      detail = 'HTTP ' + r.status + ', ' + (r.headers.get('content-type') || '?') + ', ' + (len >= 0 ? len + ' B' : '?');
+    } catch (e) { detail = e.message; }
+    log(ok, f + ' → ' + detail + ' @ ' + url);
+  }
+  const m = await T.MpLoader.load({});
+  log(!!(m.FaceLandmarker && m.FilesetResolver), 'MpLoader.load(): exports OK (' + Object.keys(m).join(', ') + ')');
+} catch (e) {
+  log(false, 'ERROR: ' + (e && e.message || e));
+}
+document.getElementById('out').textContent = out.join('\n') + '\n\nVEREDICTO: ' + (out.some(l => l[0] === '✘') ? 'FALLO — revisar líneas ✘' : 'TODO OK — el servidor actual sirve los binarios y la carga funciona');
+</script>
+</body></html>

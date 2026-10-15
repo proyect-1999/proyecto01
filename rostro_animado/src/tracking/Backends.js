@@ -23,6 +23,12 @@
 
   var T = (global.MM_Tracking = global.MM_Tracking || {});
 
+  /* v2.5.1 — Identificador único por carga de Backends.js: dos instancias de
+   * WorkerBackend en la misma sesión comparten script del worker (cacheado por
+   * el navegador, correcto); una recarga de página produce uno nuevo y fuerza
+   * al navegador a bajar el track.worker.js actualizado (F3). */
+  var WORKER_VERSION = '253' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+
   /* ---------------- WorkerBackend ---------------- */
 
   function WorkerBackend(opts) {
@@ -38,7 +44,15 @@
       return new Promise(function (resolve, reject) {
         if (disposed) { reject(new Error('WorkerBackend: backend destruido')); return; }
         try {
-          worker = new Worker(opts.workerUrl || 'src/tracking/track.worker.js');
+          /* v2.5.1 — F3: el worker SIEMPRE se instancia con query de versión
+           * única por sesión: fuerza la recarga del script y evita que el
+           * navegador ejecute una copia cacheada obsoleta (causa raíz de la
+           * prueba fallida). Se normaliza contra document.baseURI (no
+           * document.baseURL, que no existe — F4) para funcionar en subruta. */
+          var wu = opts.workerUrl || 'src/tracking/track.worker.js';
+          try { wu = new URL(wu, document.baseURI).href; } catch (e) { /* relativo: el Worker lo resuelve contra la página */ }
+          wu += (wu.indexOf('?') >= 0 ? '&' : '?') + 'v=' + WORKER_VERSION;
+          worker = new Worker(wu, { name: 'mm-track' });
         } catch (e) {
           reject(new Error('WorkerBackend: no se pudo crear el Worker — ' + e.message));
           return;
